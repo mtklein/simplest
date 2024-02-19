@@ -7,8 +7,14 @@
     typedef float half;
 #endif
 
+#if defined(__AVX__)
+    #define VS 32
+#else
+    #define VS 16
+#endif
+
 #if defined(__GNUC__) || defined(__clang__)
-    #define vec(T) T __attribute__((vector_size(sizeof(T) * 16 / sizeof(half))))
+    #define vec(T) T __attribute__((vector_size(sizeof(T) * VS / sizeof(half))))
     #define cast(T,v) __builtin_convertvector(v,T)
     #define splat(T,v) (((T){0} + 1) * (v))
 #else
