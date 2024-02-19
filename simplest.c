@@ -52,8 +52,8 @@ static Half lerp(Half from, Half to, Half t) {
 
 void blitrow(void *dst, int dx, int dy, int n,
              struct DstFormat const *fmt,
-             struct Step            *cov,
-             struct Step            *src,
+             struct Step             cov[],
+             struct Step             src[],
              BlendFn                *blend) {
     union {
         float arr[8];
