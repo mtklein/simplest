@@ -68,10 +68,8 @@ BlendFn src,srcover;
 
 struct DstFormat {
     size_t bpp;
-    RGBA (*load  )(void const*);
-    RGBA (*load1 )(void const*);
-    void (*store )(RGBA, void*);
-    void (*store1)(RGBA, void*);
+    RGBA (CC *load )(void const*);
+    void (CC *store)(RGBA, void*);
 };
 
 extern struct DstFormat const rgba_8888;

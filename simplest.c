@@ -1,6 +1,11 @@
 #include "simplest.h"
 #include <stdint.h>
 #include <string.h>
+#if defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
+    #include <arm_neon.h>
+#endif
+
+#define K (int)(sizeof(Half) / sizeof(half))
 
 define_step(noop) {
     return call(st+1,x,y);
@@ -45,97 +50,83 @@ static Half lerp(Half from, Half to, Half t) {
     return (to - from) * t + from;
 }
 
-void blitrow(void* dst, int dx, int dy, int n,
+void blitrow(void *dst, int dx, int dy, int n,
              struct DstFormat const *fmt,
              struct Step            *cov,
              struct Step            *src,
              BlendFn                *blend) {
-    int const K = sizeof(Half) / sizeof(half);
-
     union {
         float arr[8];
         Float vec;
-    } iota = {{0,1,2,3,4,5,6,7}};
+    } const iota = {{0,1,2,3,4,5,6,7}};
 
     Float       x = iota.vec       + (float)dx + 0.5f;
     Float const y = splat(Float,0) + (float)dy + 0.5f;
 
-    while (n >= K) {
-        RGBA d = fmt->load(dst),
-             s = call(src,x,y),
-             b = blend(s,d),
-             c = call(cov,x,y),
-             l = {
-                 lerp(d.r, b.r, c.r),
-                 lerp(d.g, b.g, c.g),
-                 lerp(d.b, b.b, c.b),
-                 lerp(d.a, b.a, c.a),
-             };
-        fmt->store(l,dst);
+    while (n > 0) {
+        float tmp[4*K];
+        void *tgt = n < K ? tmp : dst;
+
+        if (tgt != dst) {
+            memcpy(tgt,dst,(size_t)n*fmt->bpp);
+        }
+        RGBA d = fmt->load(tgt),
+             s = blend(call(src,x,y), d),
+             c = call(cov,x,y);
+        fmt->store((RGBA){
+            lerp(d.r, s.r, c.r),
+            lerp(d.g, s.g, c.g),
+            lerp(d.b, s.b, c.b),
+            lerp(d.a, s.a, c.a),
+        }, tgt);
+        if (tgt != dst) {
+            memcpy(dst,tgt,(size_t)n*fmt->bpp);
+        }
 
         dst = (char*)dst + K*fmt->bpp;
         x  += (float)K;
         n  -= K;
     }
-    while (n >= 1) {
-        RGBA d = fmt->load1(dst),
-             s = call(src,x,y),
-             b = blend(s,d),
-             c = call(cov,x,y),
-             l = {
-                 lerp(d.r, b.r, c.r),
-                 lerp(d.g, b.g, c.g),
-                 lerp(d.b, b.b, c.b),
-                 lerp(d.a, b.a, c.a),
-             };
-        fmt->store1(l,dst);
-
-        dst = (char*)dst + 1*fmt->bpp;
-        x  += (float)1;
-        n  -= 1;
-    }
 }
 
-typedef vec(uint32_t) U32;
+typedef vec(int32_t) I32;
+typedef vec(uint8_t) U8;
 
-static RGBA from_rgba_8888(U32 px) {
+CC static RGBA load_rgba_8888(void const *ptr) {
+#if defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
+    uint8x8x4_t px = vld4_u8(ptr);
     return (RGBA) {
-        cast(Half, cast(Float, (px >>  0) & 0xff)),
-        cast(Half, cast(Float, (px >>  8) & 0xff)),
-        cast(Half, cast(Float, (px >> 16) & 0xff)),
-        cast(Half, cast(Float, (px >> 24) & 0xff)),
+        cast(Half, px.val[0]) * (half)(1/255.0),
+        cast(Half, px.val[1]) * (half)(1/255.0),
+        cast(Half, px.val[2]) * (half)(1/255.0),
+        cast(Half, px.val[3]) * (half)(1/255.0),
     };
-}
-static U32 to_rgba_8888(RGBA rgba) {
-    return cast(U32, rgba.r * 255.0f + 0.5f) <<  0
-         | cast(U32, rgba.g * 255.0f + 0.5f) <<  8
-         | cast(U32, rgba.b * 255.0f + 0.5f) << 16
-         | cast(U32, rgba.a * 255.0f + 0.5f) << 24;
-}
-
-static RGBA load_rgba_8888(void const *ptr) {
-    U32 px;
+#else
+    I32 px;
     memcpy(&px, ptr, sizeof px);
-    return from_rgba_8888(px);
+    return (RGBA) {
+        cast(Half, (px >>  0) & 255) * (half)(1/255.0),
+        cast(Half, (px >>  8) & 255) * (half)(1/255.0),
+        cast(Half, (px >> 16) & 255) * (half)(1/255.0),
+        cast(Half, (px >> 24) & 255) * (half)(1/255.0),
+    };
+#endif
 }
-static RGBA load1_rgba_8888(void const *ptr) {
-    U32 px={0};
-    memcpy(&px, ptr, 4);
-    return from_rgba_8888(px);
-}
-static void store_rgba_8888(RGBA rgba, void *ptr) {
-    U32 px = to_rgba_8888(rgba);
+CC static void store_rgba_8888(RGBA rgba, void *ptr) {
+#if defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
+    vst4_u8(ptr, ((uint8x8x4_t){
+        cast(U8, rgba.r * 255 + 0.5),
+        cast(U8, rgba.g * 255 + 0.5),
+        cast(U8, rgba.b * 255 + 0.5),
+        cast(U8, rgba.a * 255 + 0.5),
+    }));
+#else
+    I32 px = cast(I32, rgba.r * 255 + 0.5) <<  0
+           | cast(I32, rgba.g * 255 + 0.5) <<  8
+           | cast(I32, rgba.b * 255 + 0.5) << 16
+           | cast(I32, rgba.a * 255 + 0.5) << 24;
     memcpy(ptr, &px, sizeof px);
-}
-static void store1_rgba_8888(RGBA rgba, void *ptr) {
-    U32 px = to_rgba_8888(rgba);
-    memcpy(ptr, &px, 4);
+#endif
 }
 
-struct DstFormat const rgba_8888 = {
-    4,
-    load_rgba_8888,
-    load1_rgba_8888,
-    store_rgba_8888,
-    store1_rgba_8888,
-};
+struct DstFormat const rgba_8888 = {4, load_rgba_8888, store_rgba_8888};
