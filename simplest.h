@@ -8,8 +8,18 @@
 
 #if defined(__GNUC__) || defined(__clang__)
     #define vec(T) T __attribute__((vector_size(sizeof(T) * 16 / sizeof(half))))
+    #define cast(T,v) __builtin_convertvector(v,T)
+    #define splat(T,v) (((T){0} + 1) * (v))
 #else
     #define vec(T) T
+    #define cast(T,v) (T)(v)
+    #define splat(T,v) (T)(v)
+#endif
+
+#if defined(__clang__) && defined(__x86_64__)
+    #define CC __regcall
+#else
+    #define CC
 #endif
 
 typedef vec(half)  Half;
@@ -20,15 +30,15 @@ typedef struct {
 } RGBA;
 
 struct Step {
-    RGBA (*fn)(struct Step*, Half,Half,Half,Half);
+    RGBA (CC *fn)(struct Step*, Half,Half,Half,Half);
     void *ctx;
 };
 
-#define declare_step(name) RGBA name(struct Step*, Half,Half,Half,Half)
+#define declare_step(name) CC RGBA name(struct Step*, Half,Half,Half,Half)
 
 #define define_step(name)                                            \
     static RGBA name##_(struct Step *ip, Float x, Float y);          \
-    RGBA name(struct Step *ip, Half xl, Half xh, Half yl, Half yh) { \
+    CC RGBA name(struct Step *ip, Half xl, Half xh, Half yl, Half yh) { \
         union {                                                      \
             Half  h[4];                                              \
             Float f[2];                                              \

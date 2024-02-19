@@ -1,7 +1,5 @@
 #include "simplest.h"
 
-#define splat(T,v) (((T){0} + 1) * (v))
-
 define_step(noop) {
     return next(ip,x,y);
 }
@@ -18,8 +16,8 @@ define_step(swap_rb) {
 
 define_step(grad) {
     half const *alpha = ip->ctx;
-    Half X = __builtin_convertvector(x,Half),
-         Y = __builtin_convertvector(y,Half);
+    Half X = cast(Half, x),
+         Y = cast(Half, y);
     return (RGBA){
         X,
         1-X,
