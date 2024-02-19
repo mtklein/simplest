@@ -13,3 +13,15 @@ define_step(swap_rb) {
     c.b = tmp;
     return c;
 }
+
+define_step(grad) {
+    (void)ip;
+    Half X = __builtin_convertvector(x,Half),
+         Y = __builtin_convertvector(y,Half);
+    return (RGBA){
+        X,
+        1-X,
+        Y,
+        (Half){0} + 1,
+    };
+}

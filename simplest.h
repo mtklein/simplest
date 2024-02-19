@@ -47,3 +47,4 @@ static inline RGBA next(struct Step *ip, Float x, Float y) {
 
 declare_step(noop);
 declare_step(swap_rb);
+declare_step(grad);
