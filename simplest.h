@@ -36,15 +36,15 @@ struct Step {
 
 #define declare_step(name) CC RGBA name(struct Step*, Half,Half,Half,Half)
 
-#define define_step(name)                                            \
-    static RGBA name##_(struct Step *ip, Float x, Float y);          \
+#define define_step(name)                                               \
+    static RGBA name##_(struct Step *ip, Float x, Float y);             \
     CC RGBA name(struct Step *ip, Half xl, Half xh, Half yl, Half yh) { \
-        union {                                                      \
-            Half  h[4];                                              \
-            Float f[2];                                              \
-        } xy = {{xl,xh,yl,yh}};                                      \
-        return name##_(ip, xy.f[0], xy.f[1]);                        \
-    }                                                                \
+        union {                                                         \
+            Half  h[4];                                                 \
+            Float f[2];                                                 \
+        } xy = {{xl,xh,yl,yh}};                                         \
+        return name##_(ip, xy.f[0], xy.f[1]);                           \
+    }                                                                   \
     static RGBA name##_(struct Step *ip, Float x, Float y)
 
 static inline RGBA next(struct Step *ip, Float x, Float y) {
