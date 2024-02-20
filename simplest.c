@@ -5,8 +5,6 @@
     #include <arm_neon.h>
 #endif
 
-#define K (int)(sizeof(Half) / sizeof(half))
-
 define_step(noop) {
     return call(st+1,x,y);
 }
@@ -21,16 +19,12 @@ define_step(swap_rb) {
     return c;
 }
 
-define_step(grad) {
-    half const *alpha = st->ctx;
-    Half X = cast(Half, x),
-         Y = cast(Half, y);
-    return (RGBA){
-        X,
-        1-X,
-        Y,
-        splat(Half, *alpha),
-    };
+define_step(full_coverage) {
+    (void)st;
+    (void)x;
+    (void)y;
+    Half one = splat(Half, 1);
+    return (RGBA){one,one,one,one};
 }
 
 CC RGBA src(RGBA s, RGBA d) {
@@ -52,8 +46,8 @@ static Half lerp(Half from, Half to, Half t) {
 
 void blitrow(void *dst, int dx, int dy, int n,
              struct DstFormat const *fmt,
-             struct Step             cov[],
-             struct Step             src[],
+             struct Step             cover[],
+             struct Step             color[],
              BlendFn                *blend) {
     union {
         float arr[8];
@@ -71,8 +65,8 @@ void blitrow(void *dst, int dx, int dy, int n,
             memcpy(tgt,dst,(size_t)n*fmt->bpp);
         }
         RGBA d = fmt->load(tgt),
-             s = blend(call(src,x,y), d),
-             c = call(cov,x,y);
+             s = blend(call(color,x,y), d),
+             c = call(cover,x,y);
         fmt->store((RGBA){
             lerp(d.r, s.r, c.r),
             lerp(d.g, s.g, c.g),

@@ -31,6 +31,7 @@
 
 typedef vec(half)  Half;
 typedef vec(float) Float;
+#define K (int)(sizeof(Half) / sizeof(half))
 
 typedef struct {
     Half r,g,b,a;
@@ -46,6 +47,7 @@ struct Step {
 #define declare_step(name) CC RGBA name(struct Step*, Half,Half,Half,Half)
 
 #define define_step(name)                                               \
+    declare_step(name);                                                 \
     static RGBA name##_(struct Step *st, Float x, Float y);             \
     CC RGBA name(struct Step *st, Half xl, Half xh, Half yl, Half yh) { \
         union {                                                         \
@@ -66,7 +68,7 @@ static inline RGBA call(struct Step *st, Float x, Float y) {
 
 declare_step(noop);
 declare_step(swap_rb);
-declare_step(grad);
+declare_step(full_coverage);
 
 typedef RGBA (CC BlendFn)(RGBA, RGBA);
 
@@ -82,6 +84,6 @@ extern struct DstFormat const rgba_8888;
 
 void blitrow(void *dst, int dx, int dy, int n,
              struct DstFormat const *fmt,
-             struct Step             cov[],
-             struct Step             src[],
+             struct Step             cover[],
+             struct Step             color[],
              BlendFn                *blend);
