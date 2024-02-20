@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
     struct PixelFormat const fmt = {sizeof *px, load_zero, store_rgb_fff};
 
     struct Stage cover[] = {{white,NULL}},
-                 color[] = {{grad,&grad_ctx}};
+                 color[] = {{swap_rb,NULL}, {grad,&grad_ctx}};
 
     while (loops --> 0) {
         for (int y = 0; y < h; y++) {
