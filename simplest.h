@@ -42,8 +42,6 @@ struct Stage {
     void *ctx;
 };
 
-// TODO: xl,xh,yl,yh swizzling can't be right on both x86 and ARM.  Test, fix.
-
 #define declare_stage(name) CC RGBA name(struct Stage*, Half,Half,Half,Half)
 
 #define define_stage(name)                                                \

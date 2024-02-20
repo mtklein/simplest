@@ -40,49 +40,6 @@ CC RGBA blend_srcover(RGBA s, RGBA d) {
     return s;
 }
 
-static Half lerp(Half from, Half to, Half t) {
-    return (to - from) * t + from;
-}
-
-void blitrow(void *dst, int dx, int dy, int n,
-             struct PixelFormat const *fmt,
-             BlendFn                  *blend,
-             struct Stage              cover[],
-             struct Stage              color[]) {
-    union {
-        float arr[8];
-        Float vec;
-    } const iota = {{0,1,2,3,4,5,6,7}};
-
-    Float       x = iota.vec       + (float)dx + 0.5f;
-    Float const y = splat(Float,0) + (float)dy + 0.5f;
-
-    while (n > 0) {
-        float tmp[4*K];
-        void *tgt = n < K ? tmp : dst;
-
-        if (tgt != dst) {
-            memcpy(tgt,dst,(size_t)n*fmt->bpp);
-        }
-        RGBA d = fmt->load(tgt),
-             s = blend(call(color,x,y), d),
-             c = call(cover,x,y);
-        fmt->store((RGBA){
-            lerp(d.r, s.r, c.r),
-            lerp(d.g, s.g, c.g),
-            lerp(d.b, s.b, c.b),
-            lerp(d.a, s.a, c.a),
-        }, tgt);
-        if (tgt != dst) {
-            memcpy(dst,tgt,(size_t)n*fmt->bpp);
-        }
-
-        dst = (char*)dst + K*fmt->bpp;
-        x  += (float)K;
-        n  -= K;
-    }
-}
-
 typedef vec(int32_t) I32;
 typedef vec(uint8_t) U8;
 
@@ -155,4 +112,47 @@ CC void store_rgb_fff(RGBA rgba, void *ptr) {
         *p++ = (float)*b++;
     }
 #endif
+}
+
+static Half lerp(Half from, Half to, Half t) {
+    return (to - from) * t + from;
+}
+
+void blitrow(void *dst, int dx, int dy, int n,
+             struct PixelFormat const *fmt,
+             BlendFn                  *blend,
+             struct Stage              cover[],
+             struct Stage              color[]) {
+    union {
+        float arr[8];
+        Float vec;
+    } const iota = {{0,1,2,3,4,5,6,7}};
+
+    Float       x = iota.vec       + (float)dx + 0.5f;
+    Float const y = splat(Float,0) + (float)dy + 0.5f;
+
+    while (n > 0) {
+        float tmp[4*K];
+        void *tgt = n < K ? tmp : dst;
+
+        if (tgt != dst) {
+            memcpy(tgt,dst,(size_t)n*fmt->bpp);
+        }
+        RGBA d = fmt->load(tgt),
+             s = blend(call(color,x,y), d),
+             c = call(cover,x,y);
+        fmt->store((RGBA){
+            lerp(d.r, s.r, c.r),
+            lerp(d.g, s.g, c.g),
+            lerp(d.b, s.b, c.b),
+            lerp(d.a, s.a, c.a),
+        }, tgt);
+        if (tgt != dst) {
+            memcpy(dst,tgt,(size_t)n*fmt->bpp);
+        }
+
+        dst = (char*)dst + K*fmt->bpp;
+        x  += (float)K;
+        n  -= K;
+    }
 }
