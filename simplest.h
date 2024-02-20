@@ -72,7 +72,8 @@ declare_step(full_coverage);
 
 typedef RGBA (CC BlendFn)(RGBA, RGBA);
 
-BlendFn src,srcover;
+BlendFn blend_src,
+        blend_srcover;
 
 struct DstFormat {
     size_t bpp;

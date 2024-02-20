@@ -27,12 +27,12 @@ define_step(full_coverage) {
     return (RGBA){one,one,one,one};
 }
 
-CC RGBA src(RGBA s, RGBA d) {
+CC RGBA blend_src(RGBA s, RGBA d) {
     (void)d;
     return s;
 }
 
-CC RGBA srcover(RGBA s, RGBA d) {
+CC RGBA blend_srcover(RGBA s, RGBA d) {
     s.r += d.r * (1-s.a);
     s.g += d.g * (1-s.a);
     s.b += d.b * (1-s.a);

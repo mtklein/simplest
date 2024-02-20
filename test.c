@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
 
     while (loops --> 0) {
         for (int y = 0; y < h; y++) {
-            blitrow(px + y*w, 0,y,w, &rgb_fff_ro, cover,color,src);
+            blitrow(px + y*w, 0,y,w, &rgb_fff_ro, cover,color,blend_srcover);
         }
         int fd = 1;
         stbi_write_hdr_to_func(write_to_fd,&fd, w,h,3, &px->r);
