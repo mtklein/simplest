@@ -7,7 +7,9 @@ static void write_to_fd(void *ctx, void *buf, int len) {
     write(*(int*)ctx, buf, (size_t)len);
 }
 
-int main(void) {
+int main(int argc, char **argv) {
+    int loops = argc > 1 ? atoi(argv[1]) : 1;
+
     struct RGB { float r,g,b; };
 
     int const w = 320,
@@ -15,13 +17,15 @@ int main(void) {
 
     struct RGB *px = malloc(sizeof *px * (size_t)w * (size_t)h);
 
-    for (int y = 0; y < h; y++)
-    for (int x = 0; x < w; x++) {
-        px[y*w + x] = (struct RGB){(float)x / w, 0.5, (float)y / h};
-    }
+    while (loops --> 0) {
+        for (int y = 0; y < h; y++)
+        for (int x = 0; x < w; x++) {
+            px[y*w + x] = (struct RGB){(float)x / w, 0.5, (float)y / h};
+        }
 
-    int fd = 1;
-    stbi_write_hdr_to_func(write_to_fd,&fd, w,h,3, &px->r);
+        int fd = 1;
+        stbi_write_hdr_to_func(write_to_fd,&fd, w,h,3, &px->r);
+    }
 
     free(px);
     return 0;
