@@ -5,11 +5,11 @@
     #include <arm_neon.h>
 #endif
 
-define_step(noop) {
+define_stage(noop) {
     return call(st+1,x,y);
 }
 
-define_step(swap_rb) {
+define_stage(swap_rb) {
     RGBA c = call(st+1,x,y);
 
     Half tmp;
@@ -19,7 +19,7 @@ define_step(swap_rb) {
     return c;
 }
 
-define_step(full_coverage) {
+define_stage(white) {
     (void)st;
     (void)x;
     (void)y;
@@ -45,10 +45,10 @@ static Half lerp(Half from, Half to, Half t) {
 }
 
 void blitrow(void *dst, int dx, int dy, int n,
-             struct DstFormat const *fmt,
-             struct Step             cover[],
-             struct Step             color[],
-             BlendFn                *blend) {
+             struct PixelFormat const *fmt,
+             BlendFn                  *blend,
+             struct Stage              cover[],
+             struct Stage              color[]) {
     union {
         float arr[8];
         Float vec;
@@ -122,5 +122,37 @@ CC static void store_rgba_8888(RGBA rgba, void *ptr) {
     memcpy(ptr, &px, sizeof px);
 #endif
 }
+struct PixelFormat const rgba_8888 = {4, load_rgba_8888, store_rgba_8888};
 
-struct DstFormat const rgba_8888 = {4, load_rgba_8888, store_rgba_8888};
+CC RGBA load_zero(void const *ptr) {
+    (void)ptr;
+    return (RGBA){0};
+}
+
+CC void store_rgb_fff(RGBA rgba, void *ptr) {
+    float *p = ptr;
+#if defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
+    Float r = cast(Float, rgba.r),
+          g = cast(Float, rgba.g),
+          b = cast(Float, rgba.b);
+    vst3q_f32(p+ 0, ((float32x4x3_t) {
+        __builtin_shufflevector(r,r, 0,1,2,3),
+        __builtin_shufflevector(g,g, 0,1,2,3),
+        __builtin_shufflevector(b,b, 0,1,2,3),
+    }));
+    vst3q_f32(p+12, ((float32x4x3_t) {
+        __builtin_shufflevector(r,r, 4,5,6,7),
+        __builtin_shufflevector(g,g, 4,5,6,7),
+        __builtin_shufflevector(b,b, 4,5,6,7),
+    }));
+#else
+    half const *r = (half const*)&rgba.r,
+               *g = (half const*)&rgba.g,
+               *b = (half const*)&rgba.b;
+    for (int i = 0; i < K; i++) {
+        *p++ = (float)*r++;
+        *p++ = (float)*g++;
+        *p++ = (float)*b++;
+    }
+#endif
+}
