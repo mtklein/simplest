@@ -37,14 +37,16 @@ int main(int argc, char **argv) {
     struct Stage cover[] = {{circle, &circle_ctx}},
                  color[] = {{swap_rb,NULL}, {grad,&grad_ctx}};
 
-    while (loops --> 0) {
+    for (int i = 0; i < loops; i++) {
         for (int y = 0; y < h; y++) {
             blitrow(px + y*w, 0,y,w, &fmt,blend_srcover,cover,color);
         }
     }
 
-    int fd = 1;
-    stbi_write_hdr_to_func(write_to_fd,&fd, w,h,3, &px->r);
+    if (loops == 1) {
+        int fd = 1;
+        stbi_write_hdr_to_func(write_to_fd,&fd, w,h,3, &px->r);
+    }
 
     free(px);
     return 0;
