@@ -142,12 +142,12 @@ CC void store_rgb_fff(RGBA rgba, void *ptr) {
 enum Coverage { NONE, PARTIAL, FULL };
 static enum Coverage classify(RGBA c) {
 #if defined(__clang__)
-    if (0 >= __builtin_reduce_max(
+    if (0 == __builtin_reduce_max(
                 __builtin_elementwise_max(__builtin_elementwise_max(c.r, c.g),
                                           __builtin_elementwise_max(c.b, c.a)))) {
         return NONE;
     }
-    if (1 <=__builtin_reduce_min(
+    if (1 ==__builtin_reduce_min(
                 __builtin_elementwise_min(__builtin_elementwise_min(c.r, c.g),
                                           __builtin_elementwise_min(c.b, c.a)))) {
         return FULL;
