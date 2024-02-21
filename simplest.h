@@ -75,7 +75,7 @@ declare_stage(noop);
 declare_stage(swap_rb);
 declare_stage(white);
 
-struct circle_ctx {
+struct circle {
     float x,y,r;
 };
 declare_stage(circle);

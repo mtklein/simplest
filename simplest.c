@@ -44,7 +44,7 @@ static Float bit_and(Float x, Mask cond) {
 }
 
 define_stage(circle) {
-    struct circle_ctx const *ctx = st->ctx;
+    struct circle const *ctx = st->ctx;
 
     Float dx = x - ctx->x,
           dy = y - ctx->y;

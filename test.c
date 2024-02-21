@@ -8,13 +8,13 @@ static void write_to_fd(void *ctx, void *buf, int len) {
     write(*(int*)ctx, buf, (size_t)len);
 }
 
-struct grad_ctx {
+struct grad {
     half invW,
          invH;
 };
 
 static define_stage(grad) {
-    struct grad_ctx const *ctx = st->ctx;
+    struct grad const *ctx = st->ctx;
     Half r =  cast(Half, x) * ctx->invW,
          g = splat(Half, 0.5),
          b =  cast(Half, y) * ctx->invH,
@@ -45,12 +45,12 @@ int main(int argc, char **argv) {
     struct RGB { float r,g,b; } *px = calloc((size_t)w * (size_t)h, sizeof *px);
     struct PixelFormat const fmt = {sizeof *px, load_zero, store_rgb_fff};
 
-    struct grad_ctx grad_ctx = {(half)1/w, (half)1/h};
+    struct grad grad_ctx = {(half)1/w, (half)1/h};
     struct Stage chain_color[] = {{swap_rb,NULL}, {grad,&grad_ctx}},
                   fuse_color[] = {{swap_rb_grad, &grad_ctx}},
                       *color   = fuse ? fuse_color : chain_color;
 
-    struct circle_ctx circle_ctx = {160,120,100};
+    struct circle circle_ctx = {160,120,100};
     struct Stage full_cover[] = {{white, NULL}},
                circle_cover[] = {{circle, &circle_ctx}},
                      *cover   = full ? full_cover : circle_cover;
