@@ -41,9 +41,10 @@ int main(int argc, char **argv) {
         for (int y = 0; y < h; y++) {
             blitrow(px + y*w, 0,y,w, &fmt,blend_srcover,cover,color);
         }
-        int fd = 1;
-        stbi_write_hdr_to_func(write_to_fd,&fd, w,h,3, &px->r);
     }
+
+    int fd = 1;
+    stbi_write_hdr_to_func(write_to_fd,&fd, w,h,3, &px->r);
 
     free(px);
     return 0;
