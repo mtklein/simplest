@@ -29,6 +29,13 @@
     #define CC
 #endif
 
+#if defined(__clang__)
+    #define AI __attribute__((artificial, always_inline, nodebug))
+#else
+    #define AI
+#endif
+
+
 typedef vec(half)  Half;
 typedef vec(float) Float;
 #define K (int)(sizeof(Half) / sizeof(half))
@@ -46,7 +53,7 @@ struct Stage {
 
 #define define_stage(name)                                                \
     declare_stage(name);                                                  \
-    static RGBA name##_(struct Stage st[], Float x, Float y);             \
+    AI static inline RGBA name##_(struct Stage st[], Float x, Float y);   \
     CC RGBA name(struct Stage st[], Half xl, Half xh, Half yl, Half yh) { \
         union {                                                           \
             Half  h[4];                                                   \
@@ -54,9 +61,9 @@ struct Stage {
         } xy = {{xl,xh,yl,yh}};                                           \
         return name##_(st, xy.f[0], xy.f[1]);                             \
     }                                                                     \
-    static RGBA name##_(struct Stage st[], Float x, Float y)
+    AI static inline RGBA name##_(struct Stage st[], Float x, Float y)
 
-static inline RGBA call(struct Stage st[], Float x, Float y) {
+AI static inline RGBA call(struct Stage st[], Float x, Float y) {
     union {
         Float f[2];
         Half  h[4];
