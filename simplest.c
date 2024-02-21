@@ -159,10 +159,6 @@ static enum Coverage classify(RGBA c) {
     return PARTIAL;
 }
 
-static Half lerp(Half from, Half to, Half t) {
-    return (to - from) * t + from;
-}
-
 void blit_row(void *ptr, int dx, int dy, int n,
               struct PixelFormat const *fmt,
               BlendFn                  *blend,
@@ -191,10 +187,10 @@ void blit_row(void *ptr, int dx, int dy, int n,
             RGBA d = fmt->load(dst),
                  s = blend(call(color, x,y), d);
             if (coverage == PARTIAL) {
-                s.r = lerp(d.r, s.r, c.r);
-                s.g = lerp(d.g, s.g, c.g);
-                s.b = lerp(d.b, s.b, c.b);
-                s.a = lerp(d.a, s.a, c.a);
+                s.r = (s.r - d.r) * c.r + d.r;
+                s.g = (s.g - d.g) * c.g + d.g;
+                s.b = (s.b - d.b) * c.b + d.b;
+                s.a = (s.a - d.a) * c.a + d.a;
             }
             fmt->store(s, dst);
 
