@@ -186,7 +186,7 @@ void blit_row(void *ptr, int dx, int dy, int n,
 
             RGBA d = fmt->load(dst),
                  s = blend(call(color, x,y), d);
-            if (coverage == PARTIAL) {
+            if (coverage != FULL) {
                 s.r = (s.r - d.r) * c.r + d.r;
                 s.g = (s.g - d.g) * c.g + d.g;
                 s.b = (s.b - d.b) * c.b + d.b;
