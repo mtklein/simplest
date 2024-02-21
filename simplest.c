@@ -154,11 +154,11 @@ static Half lerp(Half from, Half to, Half t) {
     return (to - from) * t + from;
 }
 
-void blitrow(void *ptr, int dx, int dy, int n,
-             struct PixelFormat const *fmt,
-             BlendFn                  *blend,
-             struct Stage              cover[],
-             struct Stage              color[]) {
+void blit_row(void *ptr, int dx, int dy, int n,
+              struct PixelFormat const *fmt,
+              BlendFn                  *blend,
+              struct Stage              cover[],
+              struct Stage              color[]) {
     union {
         float arr[8];
         Float vec;

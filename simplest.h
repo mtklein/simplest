@@ -88,8 +88,8 @@ extern struct PixelFormat const rgba_8888;
 CC RGBA load_zero(void const*);
 CC void store_rgb_fff(RGBA, void*);
 
-void blitrow(void *dst, int dx, int dy, int n,
-             struct PixelFormat const *fmt,
-             BlendFn                  *blend,
-             struct Stage              cover[],
-             struct Stage              color[]);
+void blit_row(void *dst, int dx, int dy, int n,
+              struct PixelFormat const *fmt,
+              BlendFn                  *blend,
+              struct Stage              cover[],
+              struct Stage              color[]);
