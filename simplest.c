@@ -139,6 +139,17 @@ CC void store_rgb_fff(RGBA rgba, void *ptr) {
 #endif
 }
 
+static _Bool maybe_covered(RGBA c) {
+#if defined(__clang__)
+    return 0 < __builtin_reduce_max(__builtin_elementwise_max(__builtin_elementwise_max(c.r, c.g),
+                                                              __builtin_elementwise_max(c.b, c.a)));
+#else
+    // TODO
+    (void)c;
+    return 1;
+#endif
+}
+
 static Half lerp(Half from, Half to, Half t) {
     return (to - from) * t + from;
 }
@@ -158,13 +169,7 @@ void blitrow(void *ptr, int dx, int dy, int n,
 
     while (n > 0) {
         RGBA c = call(cover, x,y);
-        _Bool covered = 1;
-#if defined(__clang__)
-        covered = 0 < __builtin_reduce_max(
-                __builtin_elementwise_max(__builtin_elementwise_max(c.r, c.g),
-                                          __builtin_elementwise_max(c.b, c.a)));
-#endif
-        if (covered) {
+        if (maybe_covered(c)) {
             float tmp[4*K];
             void *dst = n < K ? tmp : ptr;
 
