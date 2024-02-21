@@ -157,23 +157,31 @@ void blitrow(void *dst, int dx, int dy, int n,
     Float const y = splat(Float,0) + (float)dy + 0.5f;
 
     while (n > 0) {
-        float tmp[4*K];
-        void *tgt = n < K ? tmp : dst;
+        RGBA c = call(cover, x,y);
+        _Bool covered = 1;
+#if defined(__clang__)
+        covered = 0 < __builtin_reduce_max(
+                __builtin_elementwise_max(__builtin_elementwise_max(c.r, c.g),
+                                          __builtin_elementwise_max(c.b, c.a)));
+#endif
+        if (covered) {
+            float tmp[4*K];
+            void *tgt = n < K ? tmp : dst;
 
-        if (tgt != dst) {
-            memcpy(tgt,dst,(size_t)n*fmt->bpp);
-        }
-        RGBA d = fmt->load(tgt),
-             s = blend(call(color,x,y), d),
-             c = call(cover,x,y);
-        fmt->store((RGBA){
-            lerp(d.r, s.r, c.r),
-            lerp(d.g, s.g, c.g),
-            lerp(d.b, s.b, c.b),
-            lerp(d.a, s.a, c.a),
-        }, tgt);
-        if (tgt != dst) {
-            memcpy(dst,tgt,(size_t)n*fmt->bpp);
+            if (tgt != dst) {
+                memcpy(tgt,dst,(size_t)n*fmt->bpp);
+            }
+            RGBA d = fmt->load(tgt),
+                 s = blend(call(color, x,y), d);
+            fmt->store((RGBA){
+                lerp(d.r, s.r, c.r),
+                lerp(d.g, s.g, c.g),
+                lerp(d.b, s.b, c.b),
+                lerp(d.a, s.a, c.a),
+            }, tgt);
+            if (tgt != dst) {
+                memcpy(dst,tgt,(size_t)n*fmt->bpp);
+            }
         }
 
         dst = (char*)dst + K*fmt->bpp;
