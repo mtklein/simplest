@@ -139,15 +139,24 @@ CC void store_rgb_fff(RGBA rgba, void *ptr) {
 #endif
 }
 
-static _Bool maybe_covered(RGBA c) {
+enum Coverage { NONE, PARTIAL, FULL };
+static enum Coverage classify(RGBA c) {
 #if defined(__clang__)
-    return 0 < __builtin_reduce_max(__builtin_elementwise_max(__builtin_elementwise_max(c.r, c.g),
-                                                              __builtin_elementwise_max(c.b, c.a)));
+    if (0 >= __builtin_reduce_max(
+                __builtin_elementwise_max(__builtin_elementwise_max(c.r, c.g),
+                                          __builtin_elementwise_max(c.b, c.a)))) {
+        return NONE;
+    }
+    if (1 <=__builtin_reduce_min(
+                __builtin_elementwise_min(__builtin_elementwise_min(c.r, c.g),
+                                          __builtin_elementwise_min(c.b, c.a)))) {
+        return FULL;
+    }
 #else
     // TODO
     (void)c;
-    return 1;
 #endif
+    return PARTIAL;
 }
 
 static Half lerp(Half from, Half to, Half t) {
@@ -169,21 +178,26 @@ void blit_row(void *ptr, int dx, int dy, int n,
 
     while (n > 0) {
         RGBA c = call(cover, x,y);
-        if (maybe_covered(c)) {
+        enum Coverage coverage = classify(c);
+
+        if (coverage != NONE) {
             float tmp[4*K];
             void *dst = n < K ? tmp : ptr;
 
             if (dst != ptr) {
                 memcpy(dst,ptr,(size_t)n*fmt->bpp);
             }
+
             RGBA d = fmt->load(dst),
                  s = blend(call(color, x,y), d);
-            fmt->store((RGBA){
-                lerp(d.r, s.r, c.r),
-                lerp(d.g, s.g, c.g),
-                lerp(d.b, s.b, c.b),
-                lerp(d.a, s.a, c.a),
-            }, dst);
+            if (coverage == PARTIAL) {
+                s.r = lerp(d.r, s.r, c.r);
+                s.g = lerp(d.g, s.g, c.g);
+                s.b = lerp(d.b, s.b, c.b);
+                s.a = lerp(d.a, s.a, c.a);
+            }
+            fmt->store(s, dst);
+
             if (dst != ptr) {
                 memcpy(ptr,dst,(size_t)n*fmt->bpp);
             }
