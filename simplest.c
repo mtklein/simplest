@@ -143,7 +143,7 @@ static Half lerp(Half from, Half to, Half t) {
     return (to - from) * t + from;
 }
 
-void blitrow(void *dst, int dx, int dy, int n,
+void blitrow(void *ptr, int dx, int dy, int n,
              struct PixelFormat const *fmt,
              BlendFn                  *blend,
              struct Stage              cover[],
@@ -166,25 +166,25 @@ void blitrow(void *dst, int dx, int dy, int n,
 #endif
         if (covered) {
             float tmp[4*K];
-            void *tgt = n < K ? tmp : dst;
+            void *dst = n < K ? tmp : ptr;
 
-            if (tgt != dst) {
-                memcpy(tgt,dst,(size_t)n*fmt->bpp);
+            if (dst != ptr) {
+                memcpy(dst,ptr,(size_t)n*fmt->bpp);
             }
-            RGBA d = fmt->load(tgt),
+            RGBA d = fmt->load(dst),
                  s = blend(call(color, x,y), d);
             fmt->store((RGBA){
                 lerp(d.r, s.r, c.r),
                 lerp(d.g, s.g, c.g),
                 lerp(d.b, s.b, c.b),
                 lerp(d.a, s.a, c.a),
-            }, tgt);
-            if (tgt != dst) {
-                memcpy(dst,tgt,(size_t)n*fmt->bpp);
+            }, dst);
+            if (dst != ptr) {
+                memcpy(ptr,dst,(size_t)n*fmt->bpp);
             }
         }
 
-        dst = (char*)dst + K*fmt->bpp;
+        ptr = (char*)ptr + K*fmt->bpp;
         x  += (float)K;
         n  -= K;
     }
