@@ -32,7 +32,9 @@ int main(int argc, char **argv) {
     struct RGB { float r,g,b; } *px = malloc(sizeof *px * (size_t)w * (size_t)h);
     struct PixelFormat const fmt = {sizeof *px, load_zero, store_rgb_fff};
 
-    struct Stage cover[] = {{white,NULL}},
+    struct circle_ctx circle_ctx = {160,120,100};
+
+    struct Stage cover[] = {{circle, &circle_ctx}},
                  color[] = {{swap_rb,NULL}, {grad,&grad_ctx}};
 
     while (loops --> 0) {

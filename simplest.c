@@ -5,6 +5,16 @@
     #include <arm_neon.h>
 #endif
 
+typedef vec(int32_t) I32;
+typedef vec(uint8_t) U8;
+
+#if defined(__wasm__)
+    typedef vec(long) Mask;
+#else
+    typedef I32 Mask;
+#endif
+_Static_assert(sizeof(Mask) == sizeof(Float), "");
+
 define_stage(noop) {
     return call(st+1,x,y);
 }
@@ -27,6 +37,23 @@ define_stage(white) {
     return (RGBA){one,one,one,one};
 }
 
+static Float bit_and(Float x, Mask cond) {
+    union {Float f; Mask bits;} pun = {x};
+    pun.bits &= cond;
+    return pun.f;
+}
+
+define_stage(circle) {
+    struct circle_ctx const *ctx = st->ctx;
+
+    Float dx = x - ctx->x,
+          dy = y - ctx->y;
+    float r2 = ctx->r * ctx->r;
+
+    Half c = cast(Half, bit_and(splat(Float,1), dx*dx + dy*dy < r2));
+    return (RGBA){c,c,c,c};
+}
+
 CC RGBA blend_src(RGBA s, RGBA d) {
     (void)d;
     return s;
@@ -40,8 +67,6 @@ CC RGBA blend_srcover(RGBA s, RGBA d) {
     return s;
 }
 
-typedef vec(int32_t) I32;
-typedef vec(uint8_t) U8;
 
 CC static RGBA load_rgba_8888(void const *ptr) {
 #if defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)

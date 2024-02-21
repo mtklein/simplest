@@ -68,6 +68,11 @@ declare_stage(noop);
 declare_stage(swap_rb);
 declare_stage(white);
 
+struct circle_ctx {
+    float x,y,r;
+};
+declare_stage(circle);
+
 typedef RGBA (CC BlendFn)(RGBA, RGBA);
 
 BlendFn blend_src,
