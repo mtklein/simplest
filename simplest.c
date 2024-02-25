@@ -13,7 +13,7 @@ static CC RGBA white(struct Stage st[], Float const *x, Float const *y) {
     (void)st;
     (void)x;
     (void)y;
-    Half one = splat(Half, 1);
+    Half one = (Half){0} + 1;
     return (RGBA){one,one,one,one};
 }
 struct Stage const stage_white = {white,NULL};
@@ -37,7 +37,7 @@ static Float bit_and(Float x, FMask cond) {
 
 static CC RGBA circle(struct Stage st[], Float const *x, Float const *y) {
     (void)st;
-    Half c = cast(Half, bit_and(splat(Float,1), *x * *x + *y * *y < 1));
+    Half c = cast(Half, bit_and((Float){0} + 1, *x * *x + *y * *y < 1));
     return (RGBA){c,c,c,c};
 }
 struct Stage const stage_circle = {circle,NULL};
@@ -165,8 +165,8 @@ void blit_row(void *ptr, int dx, int dy, int n,
         Float vec;
     } const iota = {{0,1,2,3,4,5,6,7}};
 
-    Float       x = iota.vec       + (float)dx + 0.5f;
-    Float const y = splat(Float,0) + (float)dy + 0.5f;
+    Float       x = iota.vec   + (float)dx + 0.5f;
+    Float const y = (Float){0} + (float)dy + 0.5f;
 
     while (n > 0) {
         RGBA c = cover->fn(cover, &x,&y);

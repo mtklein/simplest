@@ -19,11 +19,9 @@
 #if defined(__GNUC__) || defined(__clang__)
     #define   vec(T)   T __attribute__((vector_size(K * sizeof(T))))
     #define  cast(T,v) __builtin_convertvector(v,T)
-    #define splat(T,v) (((T){0} + 1) * (v))
 #else
     #define   vec(T)   T
     #define  cast(T,v) (T)(v)
-    #define splat(T,v) (T)(v)
 #endif
 
 #if defined(__clang__) && defined(__x86_64__)
