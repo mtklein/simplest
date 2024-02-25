@@ -44,8 +44,8 @@ struct Stage const stage_circle = {circle,NULL};
 
 static CC RGBA affine(struct Stage st[], Float const *x, Float const *y) {
     struct affine const *ctx = st->ctx;
-    Float X = *x * ctx->sx + *y * ctx->kx + ctx->tx,
-          Y = *x * ctx->ky + *y * ctx->sy + ctx->ty;
+    Float X = *x * ctx->sx + (*y * ctx->kx + ctx->tx),
+          Y = *x * ctx->ky + (*y * ctx->sy + ctx->ty);
     return st[1].fn(st+1, &X, &Y);
 }
 struct Stage stage_affine(struct affine *ctx) { return (struct Stage){affine,ctx}; }
