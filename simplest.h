@@ -13,8 +13,10 @@
     #define VS 16
 #endif
 
+#define K (int)(VS / sizeof(half))
+
 #if defined(__GNUC__) || defined(__clang__)
-    #define vec(T) T __attribute__((vector_size(sizeof(T) * VS / sizeof(half))))
+    #define vec(T) T __attribute__((vector_size(K * sizeof(T))))
     #define cast(T,v) __builtin_convertvector(v,T)
     #define splat(T,v) (((T){0} + 1) * (v))
 #else
@@ -38,7 +40,6 @@
 
 typedef vec(half)  Half;
 typedef vec(float) Float;
-#define K (int)(sizeof(Half) / sizeof(half))
 
 typedef struct {
     Half r,g,b,a;
