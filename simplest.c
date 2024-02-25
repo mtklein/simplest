@@ -45,9 +45,15 @@ static CC RGBA circle(struct Stage st[], Float const *x, Float const *y) {
     Half c = cast(Half, bit_and(splat(Float,1), dx*dx + dy*dy < r2));
     return (RGBA){c,c,c,c};
 }
-struct Stage stage_circle(struct circle *ctx) {
-    return (struct Stage){circle,ctx};
+struct Stage stage_circle(struct circle *ctx) { return (struct Stage){circle,ctx}; }
+
+static CC RGBA affine(struct Stage st[], Float const *x, Float const *y) {
+    struct affine const *ctx = st->ctx;
+    Float X = *x * ctx->sx + *y * ctx->kx + ctx->tx,
+          Y = *x * ctx->ky + *y * ctx->sy + ctx->ty;
+    return st[1].fn(st+1, &X, &Y);
 }
+struct Stage stage_affine(struct affine *ctx) { return (struct Stage){affine,ctx}; }
 
 CC RGBA blend_src(RGBA s, RGBA d) {
     (void)d;

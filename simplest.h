@@ -64,6 +64,12 @@ struct circle {
 };
 struct Stage stage_circle(struct circle*);
 
+struct affine {
+    float sx,kx,tx,
+          ky,sy,ty;
+};
+struct Stage stage_affine(struct affine*);
+
 typedef RGBA (CC BlendFn)(RGBA, RGBA);
 
 BlendFn blend_src,

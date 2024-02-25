@@ -27,7 +27,7 @@ static struct Stage stage_grad(struct grad *ctx) {
 
 
 int main(int argc, char **argv) {
-    int loops = argc > 1 ? atoi(argv[1]) : 1;
+    int const loops = argc > 1 ? atoi(argv[1]) : 1;
 
     _Bool full = 0;
     for (int i = 2; i < argc; i++) {
@@ -40,13 +40,17 @@ int main(int argc, char **argv) {
     struct RGB { float r,g,b; } *px = calloc((size_t)w * (size_t)h, sizeof *px);
     struct PixelFormat const fmt = {sizeof *px, load_zero, store_rgb_fff};
 
-    struct grad grad = {(half)1/w, (half)1/h};
-    struct Stage color[] = {stage_swap_rb, stage_grad(&grad)};
-
+    struct affine affine = {
+        1.000f, 0.250f, 0.000f,
+        0.125f, 1.000f, 0.000f,
+    };
     struct circle circle = {160,120,100};
     struct Stage full_cover[] = {stage_white},
-               circle_cover[] = {stage_circle(&circle)},
-                     *cover   = full ? full_cover : circle_cover;
+                 oval_cover[] = {stage_affine(&affine), stage_circle(&circle)},
+                     *cover   = full ? full_cover : oval_cover;
+
+    struct grad grad = {(half)1/w, (half)1/h};
+    struct Stage color[] = {stage_swap_rb, stage_grad(&grad)};
 
     for (int i = 0; i < loops; i++) {
         for (int y = 0; y < h; y++) {
