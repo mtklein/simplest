@@ -59,8 +59,6 @@ extern struct Stage stage_noop,
                     stage_white,
                     stage_swap_rb;
 
-#define  define_stage(name) CC RGBA name(struct Stage st[], Float const *x, Float const *y)
-
 struct circle {
     float x,y,r;
 };

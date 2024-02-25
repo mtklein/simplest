@@ -13,7 +13,7 @@ struct grad {
          invH;
 };
 
-static define_stage(grad) {
+static CC RGBA grad(struct Stage st[], Float const *x, Float const *y) {
     struct grad const *ctx = st->ctx;
     Half r =  cast(Half, *x) * ctx->invW,
          g = splat(Half, 0.5),

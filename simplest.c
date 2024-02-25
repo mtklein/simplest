@@ -4,12 +4,12 @@
     #include <arm_neon.h>
 #endif
 
-static define_stage(noop) {
+static CC RGBA noop(struct Stage st[], Float const *x, Float const *y) {
     return st[1].fn(st+1, x,y);
 }
 struct Stage stage_noop = {noop,NULL};
 
-static define_stage(white) {
+static CC RGBA white(struct Stage st[], Float const *x, Float const *y) {
     (void)st;
     (void)x;
     (void)y;
@@ -18,7 +18,7 @@ static define_stage(white) {
 }
 struct Stage stage_white = {white,NULL};
 
-static define_stage(swap_rb) {
+static CC RGBA swap_rb(struct Stage st[], Float const *x, Float const *y) {
     RGBA c = st[1].fn(st+1, x,y);
 
     Half tmp;
@@ -35,7 +35,7 @@ static Float bit_and(Float x, FMask cond) {
     return pun.f;
 }
 
-static define_stage(circle) {
+static CC RGBA circle(struct Stage st[], Float const *x, Float const *y) {
     struct circle const *ctx = st->ctx;
 
     Float dx = *x - ctx->x,
