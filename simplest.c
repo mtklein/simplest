@@ -5,11 +5,11 @@
 #endif
 
 define_stage(noop) {
-    return call(st+1,x,y);
+    return st[1].fn(st+1, x,y);
 }
 
 define_stage(swap_rb) {
-    RGBA c = call(st+1,x,y);
+    RGBA c = st[1].fn(st+1, x,y);
 
     Half tmp;
     tmp = c.r;
@@ -162,7 +162,7 @@ void blit_row(void *ptr, int dx, int dy, int n,
     Float const y = splat(Float,0) + (float)dy + 0.5f;
 
     while (n > 0) {
-        RGBA c = call(cover, x,y);
+        RGBA c = cover->fn(cover, x,y);
         enum Coverage coverage = classify(c);
 
         if (coverage != NONE) {
@@ -174,7 +174,7 @@ void blit_row(void *ptr, int dx, int dy, int n,
             }
 
             RGBA d = fmt->load(dst),
-                 s = blend(call(color, x,y), d);
+                 s = blend(color->fn(color, x,y), d);
             if (coverage != FULL) {
                 s.r = (s.r - d.r) * c.r + d.r;
                 s.g = (s.g - d.g) * c.g + d.g;

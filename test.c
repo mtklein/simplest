@@ -25,7 +25,7 @@ static define_stage(grad) {
 // TODO: currently a pessimization
 static define_stage(swap_rb_grad) {
     struct Stage fused[] = {{swap_rb,NULL}, {grad,st->ctx}};
-    return call(fused, x,y);
+    return fused->fn(fused, x,y);
 }
 
 

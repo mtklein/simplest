@@ -32,12 +32,6 @@
     #define CC
 #endif
 
-#if defined(__clang__)
-    #define AI __attribute__((artificial, always_inline, nodebug))
-#else
-    #define AI
-#endif
-
 #if defined(__wasm__)
     typedef long fmask;
 #else
@@ -63,10 +57,6 @@ struct Stage {
 
 #define declare_stage(name) CC RGBA name(struct Stage st[], Float x, Float y)
 #define  define_stage(name) CC RGBA name(struct Stage st[], Float x, Float y)
-
-AI static inline RGBA call(struct Stage st[], Float x, Float y) {
-    return st->fn(st, x,y);
-}
 
 declare_stage(noop);
 declare_stage(swap_rb);
