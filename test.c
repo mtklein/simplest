@@ -40,13 +40,13 @@ int main(int argc, char **argv) {
     struct RGB { float r,g,b; } *px = calloc((size_t)w * (size_t)h, sizeof *px);
     struct PixelFormat const fmt = {sizeof *px, load_zero, store_rgb_fff};
 
+    float const r = 100;
     struct affine affine = {
-        1.000f, 0.250f, 0.000f,
-        0.125f, 1.000f, 0.000f,
+        1.000f/r, 0.250f/r, -160.0f/r,
+        0.125f/r, 1.000f/r, -120.0f/r,
     };
-    struct circle circle = {160,120,100};
     struct Stage full_cover[] = {stage_white},
-                 oval_cover[] = {stage_affine(&affine), stage_circle(&circle)},
+                 oval_cover[] = {stage_affine(&affine), stage_circle},
                      *cover   = full ? full_cover : oval_cover;
 
     struct grad grad = {(half)1/w, (half)1/h};

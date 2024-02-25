@@ -55,14 +55,10 @@ struct Stage {
     void *ctx;
 };
 
-extern struct Stage stage_noop,
-                    stage_white,
-                    stage_swap_rb;
-
-struct circle {
-    float x,y,r;
-};
-struct Stage stage_circle(struct circle*);
+extern struct Stage const stage_noop,
+                          stage_white,
+                          stage_swap_rb,
+                          stage_circle;
 
 struct affine {
     float sx,kx,tx,

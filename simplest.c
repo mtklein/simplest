@@ -7,7 +7,7 @@
 static CC RGBA noop(struct Stage st[], Float const *x, Float const *y) {
     return st[1].fn(st+1, x,y);
 }
-struct Stage stage_noop = {noop,NULL};
+struct Stage const stage_noop = {noop,NULL};
 
 static CC RGBA white(struct Stage st[], Float const *x, Float const *y) {
     (void)st;
@@ -16,7 +16,7 @@ static CC RGBA white(struct Stage st[], Float const *x, Float const *y) {
     Half one = splat(Half, 1);
     return (RGBA){one,one,one,one};
 }
-struct Stage stage_white = {white,NULL};
+struct Stage const stage_white = {white,NULL};
 
 static CC RGBA swap_rb(struct Stage st[], Float const *x, Float const *y) {
     RGBA c = st[1].fn(st+1, x,y);
@@ -27,7 +27,7 @@ static CC RGBA swap_rb(struct Stage st[], Float const *x, Float const *y) {
     c.b = tmp;
     return c;
 }
-struct Stage stage_swap_rb = {swap_rb,NULL};
+struct Stage const stage_swap_rb = {swap_rb,NULL};
 
 static Float bit_and(Float x, FMask cond) {
     union {Float f; FMask bits;} pun = {x};
@@ -36,16 +36,11 @@ static Float bit_and(Float x, FMask cond) {
 }
 
 static CC RGBA circle(struct Stage st[], Float const *x, Float const *y) {
-    struct circle const *ctx = st->ctx;
-
-    Float dx = *x - ctx->x,
-          dy = *y - ctx->y;
-    float r2 = ctx->r * ctx->r;
-
-    Half c = cast(Half, bit_and(splat(Float,1), dx*dx + dy*dy < r2));
+    (void)st;
+    Half c = cast(Half, bit_and(splat(Float,1), *x * *x + *y * *y < 1));
     return (RGBA){c,c,c,c};
 }
-struct Stage stage_circle(struct circle *ctx) { return (struct Stage){circle,ctx}; }
+struct Stage const stage_circle = {circle,NULL};
 
 static CC RGBA affine(struct Stage st[], Float const *x, Float const *y) {
     struct affine const *ctx = st->ctx;
