@@ -1,19 +1,8 @@
 #include "simplest.h"
-#include <stdint.h>
 #include <string.h>
-#if defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
+#if defined(__ARM_NEON__)
     #include <arm_neon.h>
 #endif
-
-typedef vec(int32_t) I32;
-typedef vec(uint8_t) U8;
-
-#if defined(__wasm__)
-    typedef vec(long) Mask;
-#else
-    typedef I32 Mask;
-#endif
-_Static_assert(sizeof(Mask) == sizeof(Float), "");
 
 define_stage(noop) {
     return call(st+1,x,y);
@@ -37,8 +26,8 @@ define_stage(white) {
     return (RGBA){one,one,one,one};
 }
 
-static Float bit_and(Float x, Mask cond) {
-    union {Float f; Mask bits;} pun = {x};
+static Float bit_and(Float x, FMask cond) {
+    union {Float f; FMask bits;} pun = {x};
     pun.bits &= cond;
     return pun.f;
 }

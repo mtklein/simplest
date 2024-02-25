@@ -1,5 +1,6 @@
 #pragma once
 #include <stddef.h>
+#include <stdint.h>
 
 #if defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
     typedef _Float16 half;
@@ -37,9 +38,19 @@
     #define AI
 #endif
 
+#if defined(__wasm__)
+    typedef long fmask;
+#else
+    typedef int  fmask;
+#endif
+_Static_assert(sizeof(fmask) == sizeof(float), "");
 
-typedef vec(half)  Half;
-typedef vec(float) Float;
+typedef vec(half)    Half;
+typedef vec(float)   Float;
+typedef vec(fmask)   FMask;
+typedef vec(int32_t) I32;
+typedef vec(uint8_t) U8;
+
 
 typedef struct {
     Half r,g,b,a;
