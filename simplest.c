@@ -35,8 +35,8 @@ static Float bit_and(Float x, FMask cond) {
 define_stage(circle) {
     struct circle const *ctx = st->ctx;
 
-    Float dx = x - ctx->x,
-          dy = y - ctx->y;
+    Float dx = *x - ctx->x,
+          dy = *y - ctx->y;
     float r2 = ctx->r * ctx->r;
 
     Half c = cast(Half, bit_and(splat(Float,1), dx*dx + dy*dy < r2));
@@ -162,7 +162,7 @@ void blit_row(void *ptr, int dx, int dy, int n,
     Float const y = splat(Float,0) + (float)dy + 0.5f;
 
     while (n > 0) {
-        RGBA c = cover->fn(cover, x,y);
+        RGBA c = cover->fn(cover, &x,&y);
         enum Coverage coverage = classify(c);
 
         if (coverage != NONE) {
@@ -174,7 +174,7 @@ void blit_row(void *ptr, int dx, int dy, int n,
             }
 
             RGBA d = fmt->load(dst),
-                 s = blend(color->fn(color, x,y), d);
+                 s = blend(color->fn(color, &x,&y), d);
             if (coverage != FULL) {
                 s.r = (s.r - d.r) * c.r + d.r;
                 s.g = (s.g - d.g) * c.g + d.g;

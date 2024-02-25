@@ -51,12 +51,12 @@ typedef struct {
 } RGBA;
 
 struct Stage {
-    RGBA (CC *fn)(struct Stage*, Float,Float);
+    RGBA (CC *fn)(struct Stage*, Float const*, Float const*);
     void *ctx;
 };
 
-#define declare_stage(name) CC RGBA name(struct Stage st[], Float x, Float y)
-#define  define_stage(name) CC RGBA name(struct Stage st[], Float x, Float y)
+#define declare_stage(name) CC RGBA name(struct Stage st[], Float const *x, Float const *y)
+#define  define_stage(name) CC RGBA name(struct Stage st[], Float const *x, Float const *y)
 
 declare_stage(noop);
 declare_stage(swap_rb);

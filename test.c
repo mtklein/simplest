@@ -15,9 +15,9 @@ struct grad {
 
 static define_stage(grad) {
     struct grad const *ctx = st->ctx;
-    Half r =  cast(Half, x) * ctx->invW,
+    Half r =  cast(Half, *x) * ctx->invW,
          g = splat(Half, 0.5),
-         b =  cast(Half, y) * ctx->invH,
+         b =  cast(Half, *y) * ctx->invH,
          a = splat(Half, 1.0);
     return (RGBA){r,g,b,a};
 }
