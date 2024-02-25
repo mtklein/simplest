@@ -55,17 +55,16 @@ struct Stage {
     void *ctx;
 };
 
-#define declare_stage(name) CC RGBA name(struct Stage st[], Float const *x, Float const *y)
-#define  define_stage(name) CC RGBA name(struct Stage st[], Float const *x, Float const *y)
+extern struct Stage stage_noop,
+                    stage_white,
+                    stage_swap_rb;
 
-declare_stage(noop);
-declare_stage(swap_rb);
-declare_stage(white);
+#define  define_stage(name) CC RGBA name(struct Stage st[], Float const *x, Float const *y)
 
 struct circle {
     float x,y,r;
 };
-declare_stage(circle);
+struct Stage stage_circle(struct circle*);
 
 typedef RGBA (CC BlendFn)(RGBA, RGBA);
 

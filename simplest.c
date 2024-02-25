@@ -4,11 +4,21 @@
     #include <arm_neon.h>
 #endif
 
-define_stage(noop) {
+static define_stage(noop) {
     return st[1].fn(st+1, x,y);
 }
+struct Stage stage_noop = {noop,NULL};
 
-define_stage(swap_rb) {
+static define_stage(white) {
+    (void)st;
+    (void)x;
+    (void)y;
+    Half one = splat(Half, 1);
+    return (RGBA){one,one,one,one};
+}
+struct Stage stage_white = {white,NULL};
+
+static define_stage(swap_rb) {
     RGBA c = st[1].fn(st+1, x,y);
 
     Half tmp;
@@ -17,14 +27,7 @@ define_stage(swap_rb) {
     c.b = tmp;
     return c;
 }
-
-define_stage(white) {
-    (void)st;
-    (void)x;
-    (void)y;
-    Half one = splat(Half, 1);
-    return (RGBA){one,one,one,one};
-}
+struct Stage stage_swap_rb = {swap_rb,NULL};
 
 static Float bit_and(Float x, FMask cond) {
     union {Float f; FMask bits;} pun = {x};
@@ -32,7 +35,7 @@ static Float bit_and(Float x, FMask cond) {
     return pun.f;
 }
 
-define_stage(circle) {
+static define_stage(circle) {
     struct circle const *ctx = st->ctx;
 
     Float dx = *x - ctx->x,
@@ -41,6 +44,9 @@ define_stage(circle) {
 
     Half c = cast(Half, bit_and(splat(Float,1), dx*dx + dy*dy < r2));
     return (RGBA){c,c,c,c};
+}
+struct Stage stage_circle(struct circle *ctx) {
+    return (struct Stage){circle,ctx};
 }
 
 CC RGBA blend_src(RGBA s, RGBA d) {
