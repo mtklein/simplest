@@ -30,6 +30,12 @@
     #define CC
 #endif
 
+#if defined(__clang__)
+    #define ND __attribute__((nodebug))
+#else
+    #define ND
+#endif
+
 #if defined(__wasm__)
     typedef long fmask;
 #else
@@ -53,19 +59,19 @@ struct Stage {
     void *ctx;
 };
 
-static inline RGBA call(struct Stage *st, Float x, Float y) {
+ND static inline RGBA call(struct Stage *st, Float x, Float y) {
     union { Float xy[2]; Half abi[4]; } pun = {{x,y}};
     return st->fn(st, pun.abi[0], pun.abi[1], pun.abi[2], pun.abi[3]);
 }
 
 #define stage_fn(name, ...)                                                      \
     CC RGBA name(struct Stage *st, Half abi0, Half abi1, Half abi2, Half abi3);  \
-    static inline RGBA name##_(struct Stage*, Float, Float);                     \
+    ND static inline RGBA name##_(struct Stage*, Float, Float);                  \
     CC RGBA name(struct Stage *st, Half abi0, Half abi1, Half abi2, Half abi3) { \
         union { Half abi[4]; Float xy[2]; } pun = {{abi0,abi1,abi2,abi3}};       \
         return name##_(st, pun.xy[0], pun.xy[1]);                                \
     }                                                                            \
-    static inline RGBA name##_(__VA_ARGS__)
+    ND static inline RGBA name##_(__VA_ARGS__)
 
 extern struct Stage const stage_noop,
                           stage_white,
