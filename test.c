@@ -13,7 +13,7 @@ struct grad {
          invH;
 };
 
-static CC RGBA grad(struct Stage st[], Float x, Float y) {
+static stage_fn(grad, struct Stage st[], Float x, Float y) {
     struct grad const *ctx = st->ctx;
     Half r =  cast(Half, x) * ctx->invW,
          g = (Half){0} + 0.5,

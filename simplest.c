@@ -4,12 +4,12 @@
     #include <arm_neon.h>
 #endif
 
-static CC RGBA noop(struct Stage st[], Float x, Float y) {
-    return st[1].fn(st+1, x,y);
+static stage_fn(noop, struct Stage st[], Float x, Float y) {
+    return call(st+1, x,y);
 }
 struct Stage const stage_noop = {noop,NULL};
 
-static CC RGBA white(struct Stage st[], Float x, Float y) {
+static stage_fn(white, struct Stage st[], Float x, Float y) {
     (void)st;
     (void)x;
     (void)y;
@@ -18,8 +18,8 @@ static CC RGBA white(struct Stage st[], Float x, Float y) {
 }
 struct Stage const stage_white = {white,NULL};
 
-static CC RGBA swap_rb(struct Stage st[], Float x, Float y) {
-    RGBA c = st[1].fn(st+1, x,y);
+static stage_fn(swap_rb, struct Stage st[], Float x, Float y) {
+    RGBA c = call(st+1, x,y);
 
     Half tmp;
     tmp = c.r;
@@ -35,20 +35,19 @@ static Float bit_and(Float x, FMask cond) {
     return pun.f;
 }
 
-static CC RGBA circle(struct Stage st[], Float x, Float y) {
+static stage_fn(circle, struct Stage st[], Float x, Float y) {
     (void)st;
     Half c = cast(Half, bit_and((Float){0} + 1, x*x + y*y < 1));
     return (RGBA){c,c,c,c};
 }
 struct Stage const stage_circle = {circle,NULL};
 
-static CC RGBA affine(struct Stage st[], Float x, Float y) {
-    struct affine const *ctx = st->ctx;
-    Float X = x * ctx->sx + (y * ctx->kx + ctx->tx),
-          Y = x * ctx->ky + (y * ctx->sy + ctx->ty);
-    return st[1].fn(st+1, X,Y);
+static stage_fn(affine, struct Stage st[], Float x, Float y) {
+    struct affine const *m = st->ctx;
+    return call(st+1, x * m->sx + (y * m->kx + m->tx)
+                    , x * m->ky + (y * m->sy + m->ty));
 }
-struct Stage stage_affine(struct affine *ctx) { return (struct Stage){affine,ctx}; }
+struct Stage stage_affine(struct affine *m) { return (struct Stage){affine,m}; }
 
 CC RGBA blend_src(RGBA s, RGBA d) {
     (void)d;
@@ -169,7 +168,7 @@ void blit_row(void *ptr, int dx, int dy, int n,
     Float const y = (Float){0} + (float)dy + 0.5f;
 
     while (n > 0) {
-        RGBA c = cover->fn(cover, x,y);
+        RGBA c = call(cover, x,y);
         enum Coverage coverage = classify(c);
 
         if (coverage != NONE) {
@@ -181,7 +180,7 @@ void blit_row(void *ptr, int dx, int dy, int n,
             }
 
             RGBA d = fmt->load(dst),
-                 s = blend(color->fn(color, x,y), d);
+                 s = blend(call(color, x,y), d);
             if (coverage != FULL) {
                 s.r = (s.r - d.r) * c.r + d.r;
                 s.g = (s.g - d.g) * c.g + d.g;
