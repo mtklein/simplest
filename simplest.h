@@ -2,11 +2,21 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#if defined(__wasm__)
+    typedef long fmask;
+#else
+    typedef int  fmask;
+#endif
+_Static_assert(sizeof(fmask) == sizeof(float), "");
+
 #if defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
     typedef _Float16 half;
+    typedef int16_t  hmask;
 #else
     typedef float half;
+    typedef fmask hmask;
 #endif
+_Static_assert(sizeof(hmask) == sizeof(half), "");
 
 #if defined(__AVX__)
     #define VS 32
@@ -36,14 +46,9 @@
     #define ND
 #endif
 
-#if defined(__wasm__)
-    typedef long fmask;
-#else
-    typedef int  fmask;
-#endif
-_Static_assert(sizeof(fmask) == sizeof(float), "");
 
 typedef vec(half)    Half;
+typedef vec(hmask)   HMask;
 typedef vec(float)   Float;
 typedef vec(fmask)   FMask;
 typedef vec(int32_t) I32;

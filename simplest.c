@@ -29,15 +29,15 @@ static stage_fn(swap_rb, struct Stage st[], Float x, Float y) {
 }
 struct Stage const stage_swap_rb = {swap_rb,NULL};
 
-static Float bit_and(Float x, FMask cond) {
-    union {Float f; FMask bits;} pun = {x};
+static Half bit_and(Half x, HMask cond) {
+    union {Half h; HMask bits;} pun = {x};
     pun.bits &= cond;
-    return pun.f;
+    return pun.h;
 }
 
 static stage_fn(circle, struct Stage st[], Float x, Float y) {
     (void)st;
-    Half c = cast(Half, bit_and((Float){0} + 1, x*x + y*y < 1));
+    Half c = bit_and((Half){0} + 1, cast(HMask, x*x + y*y < 1));
     return (RGBA){c,c,c,c};
 }
 struct Stage const stage_circle = {circle,NULL};
