@@ -1,4 +1,5 @@
 #include "simplest.h"
+#include <assert.h>
 #include <string.h>
 #if defined(__ARM_NEON__)
     #include <arm_neon.h>
@@ -154,6 +155,27 @@ static enum Coverage classify(RGBA c) {
     return PARTIAL;
 }
 
+static void blit_slab(void *ptr, Float x, Float y,
+                      struct PixelFormat const *fmt,
+                      BlendFn                  *blend,
+                      struct Stage              cover[],
+                      struct Stage              color[]) {
+    RGBA c = call(cover, x,y);
+    enum Coverage coverage = classify(c);
+
+    if (coverage != NONE) {
+        RGBA d = fmt->load(ptr),
+             s = blend(call(color, x,y), d);
+        if (coverage != FULL) {
+            s.r = (s.r - d.r) * c.r + d.r;
+            s.g = (s.g - d.g) * c.g + d.g;
+            s.b = (s.b - d.b) * c.b + d.b;
+            s.a = (s.a - d.a) * c.a + d.a;
+        }
+        fmt->store(s, ptr);
+    }
+}
+
 void blit_row(void *ptr, int dx, int dy, int n,
               struct PixelFormat const *fmt,
               BlendFn                  *blend,
@@ -167,35 +189,20 @@ void blit_row(void *ptr, int dx, int dy, int n,
     Float       x = iota.vec   + (float)dx + 0.5f;
     Float const y = (Float){0} + (float)dy + 0.5f;
 
-    while (n > 0) {
-        RGBA c = call(cover, x,y);
-        enum Coverage coverage = classify(c);
-
-        if (coverage != NONE) {
-            float tmp[4*K];
-            void *dst = n < K ? tmp : ptr;
-
-            if (dst != ptr) {
-                memcpy(dst,ptr,(size_t)n*fmt->bpp);
-            }
-
-            RGBA d = fmt->load(dst),
-                 s = blend(call(color, x,y), d);
-            if (coverage != FULL) {
-                s.r = (s.r - d.r) * c.r + d.r;
-                s.g = (s.g - d.g) * c.g + d.g;
-                s.b = (s.b - d.b) * c.b + d.b;
-                s.a = (s.a - d.a) * c.a + d.a;
-            }
-            fmt->store(s, dst);
-
-            if (dst != ptr) {
-                memcpy(ptr,dst,(size_t)n*fmt->bpp);
-            }
-        }
-
+    while (n >= K) {
+        blit_slab(ptr, x,y, fmt,blend,cover,color);
         ptr = (char*)ptr + K*fmt->bpp;
         x  += (float)K;
         n  -= K;
+    }
+
+    if (n) {
+        size_t const len = (size_t)n*fmt->bpp;
+        float tmp[4*K];
+        assert(len <= sizeof(tmp));
+
+        memcpy(tmp,ptr,len);
+        blit_slab(tmp, x,y, fmt,blend,cover,color);
+        memcpy(ptr,tmp,len);
     }
 }
