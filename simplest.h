@@ -49,7 +49,7 @@ typedef struct {
 } RGBA;
 
 struct Stage {
-    RGBA (CC *fn)(struct Stage*, Float const*, Float const*);
+    RGBA (CC *fn)(struct Stage*, Float, Float);
     void *ctx;
 };
 

@@ -13,11 +13,11 @@ struct grad {
          invH;
 };
 
-static CC RGBA grad(struct Stage st[], Float const *x, Float const *y) {
+static CC RGBA grad(struct Stage st[], Float x, Float y) {
     struct grad const *ctx = st->ctx;
-    Half r =  cast(Half, *x) * ctx->invW,
+    Half r =  cast(Half, x) * ctx->invW,
          g = (Half){0} + 0.5,
-         b =  cast(Half, *y) * ctx->invH,
+         b =  cast(Half, y) * ctx->invH,
          a = (Half){0} + 1.0;
     return (RGBA){r,g,b,a};
 }
