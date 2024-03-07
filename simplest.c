@@ -65,7 +65,7 @@ CC RGBA blend_srcover(RGBA s, RGBA d) {
 
 
 CC static RGBA load_rgba_8888(void const *ptr) {
-#if defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
+#if 1 && defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
     uint8x8x4_t px = vld4_u8(ptr);
     return (RGBA) {
         cast(Half, px.val[0]) * (half)(1/255.0),
@@ -85,7 +85,7 @@ CC static RGBA load_rgba_8888(void const *ptr) {
 #endif
 }
 CC static void store_rgba_8888(RGBA rgba, void *ptr) {
-#if defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
+#if 1 && defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
     vst4_u8(ptr, ((uint8x8x4_t){
         cast(U8, rgba.r * 255 + 0.5),
         cast(U8, rgba.g * 255 + 0.5),
@@ -109,7 +109,7 @@ CC RGBA load_zero(void const *ptr) {
 
 CC void store_rgb_fff(RGBA rgba, void *ptr) {
     float *p = ptr;
-#if defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
+#if 1 && defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
     Float r = cast(Float, rgba.r),
           g = cast(Float, rgba.g),
           b = cast(Float, rgba.b);
@@ -137,7 +137,7 @@ CC void store_rgb_fff(RGBA rgba, void *ptr) {
 
 enum Coverage { NONE, PARTIAL, FULL };
 static enum Coverage classify(RGBA c) {
-#if defined(__clang__)
+#if 1 && defined(__clang__)
     if (0 == __builtin_reduce_max(
                 __builtin_elementwise_max(__builtin_elementwise_max(c.r, c.g),
                                           __builtin_elementwise_max(c.b, c.a)))) {
