@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
         if (0 == strcmp("full", argv[i])) { full = 1; }
     }
 
-    int const w = 320,
+    int const w = 319,
               h = 240;
 
     struct RGB { float r,g,b; } *px = calloc((size_t)w * (size_t)h, sizeof *px);
