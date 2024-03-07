@@ -4,8 +4,8 @@
 #include <string.h>
 #include <unistd.h>
 
-static void write_to_fd(void *ctx, void *buf, int len) {
-    write(*(int*)ctx, buf, (size_t)len);
+static void write_to_fd(void *fd, void *buf, int len) {
+    write(*(int*)fd, buf, (size_t)len);
 }
 
 struct grad {
@@ -14,10 +14,10 @@ struct grad {
 };
 
 static stage_fn(grad, struct Stage st[], Float x, Float y) {
-    struct grad const *ctx = st->ctx;
-    Half r =  cast(Half, x) * ctx->invW,
+    struct grad const *grad = st->ctx;
+    Half r = cast(Half, x) * grad->invW,
          g = (Half){0} + 0.5,
-         b =  cast(Half, y) * ctx->invH,
+         b = cast(Half, y) * grad->invH,
          a = (Half){0} + 1.0;
     return (RGBA){r,g,b,a};
 }
