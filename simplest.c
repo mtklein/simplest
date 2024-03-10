@@ -114,7 +114,14 @@ CC static void store_rgba_8888(RGBA rgba, void *ptr) {
 }
 struct PixelFormat const fmt_rgba_8888 = {4, load_rgba_8888, store_rgba_8888};
 
+#if defined(__clang__)
+    #define for_lane(i) _Pragma("unroll") for (int i = 0; i < K; i++)
+#else
+    #define for_lane(i)                   for (int i = 0; i < K; i++)
+#endif
+
 CC static RGBA load_rgb_fff(void const *ptr) {
+    for_lane(i);
     float const *p = ptr;
 #if 1 && defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
     float32x4x3_t lo = vld3q_f32(p+ 0),
@@ -131,7 +138,7 @@ CC static RGBA load_rgb_fff(void const *ptr) {
     half *r = (half*)&c.r,
          *g = (half*)&c.g,
          *b = (half*)&c.b;
-    for (int i = 0; i < K; i++) {
+    for_lane(i) {
         *r++ = (half)*p++;
         *g++ = (half)*p++;
         *b++ = (half)*p++;
@@ -164,7 +171,7 @@ CC static void store_rgb_fff(RGBA rgba, void *ptr) {
     half const *r = (half const*)&rgba.r,
                *g = (half const*)&rgba.g,
                *b = (half const*)&rgba.b;
-    for (int i = 0; i < K; i++) {
+    for_lane(i) {
         *p++ = (float)*r++;
         *p++ = (float)*g++;
         *p++ = (float)*b++;
