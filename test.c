@@ -3,7 +3,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct grad { half invW, invH; };
+struct grad {
+    half invW,
+         invH;
+};
 static RGBA stage_fn(sample_grad, struct Stage st[], RGBA_XY s, RGBA_XY d) {
     struct grad const *grad = st->ctx;
     Half a = (Half){0} + 0.875;
@@ -14,8 +17,6 @@ static RGBA stage_fn(sample_grad, struct Stage st[], RGBA_XY s, RGBA_XY d) {
         .a = a,
     }, d);
 }
-static struct Stage stage_sample_grad(struct grad *ctx) { return (struct Stage){sample_grad,ctx}; }
-
 
 int main(int argc, char **argv) {
     int const loops = argc > 1 ? atoi(argv[1]) : 1;
@@ -37,9 +38,12 @@ int main(int argc, char **argv) {
                  cover_oval[] = {stage_affine(&affine), stage_cover_circle},
                 *cover        = full ? cover_full : cover_oval;
 
-    struct grad grad = { (half)1/w, (half)1/h };
+    struct grad grad = {
+        (half)1/w,
+        (half)1/h
+    };
     struct Stage color[] = {
-        stage_sample_grad(&grad),
+        {sample_grad, &grad},
         stage_swap_rb,
         stage_blend_srcover,
     };
