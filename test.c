@@ -11,11 +11,12 @@ static void write_to_fd(void *fd, void *buf, int len) {
 struct grad { half invW, invH; };
 static RGBA stage_fn(grad, struct Stage st[], RGBA_XY s, RGBA_XY d) {
     struct grad const *grad = st->ctx;
+    Half a = (Half){0} + 0.875;
     return call(st+1, (RGBA_XY) {
-        .r = cast(Half, s.x) * grad->invW,
-        .g = (Half){0} + 0.5,
-        .b = cast(Half, s.y) * grad->invH,
-        .a = (Half){0} + 1.0,
+        .r = a * cast(Half, s.x) * grad->invW,
+        .g = a * (Half){0} + 0.5,
+        .b = a * cast(Half, s.y) * grad->invH,
+        .a = a,
     }, d);
 }
 static struct Stage stage_grad(struct grad *ctx) { return (struct Stage){grad,ctx}; }
