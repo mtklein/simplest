@@ -9,7 +9,7 @@ static void write_to_fd(void *fd, void *buf, int len) {
 }
 
 struct grad { half invW, invH; };
-static stage_fn(grad, struct Stage st[], RGBA_XY s, RGBA_XY d) {
+static RGBA stage_fn(grad, struct Stage st[], RGBA_XY s, RGBA_XY d) {
     struct grad const *grad = st->ctx;
     return call(st+1, (RGBA_XY) {
         .r = cast(Half, s.x) * grad->invW,

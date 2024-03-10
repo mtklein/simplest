@@ -73,14 +73,14 @@ ND static inline RGBA call(struct Stage *st, RGBA_XY s, RGBA_XY d) {
     return st->fn(st, s.r,s.g,s.b,s.a, d.r,d.g,d.b,d.a);
 }
 
-#define stage_fn(name, ...)                                                   \
-    CC RGBA name(struct Stage *st, Half,Half,Half,Half, Half,Half,Half,Half); \
-    ND static inline RGBA name##_(struct Stage*, RGBA_XY s, RGBA_XY d);       \
-    CC RGBA name(struct Stage *st, Half sr, Half sg, Half sb, Half sa         \
-                                 , Half dr, Half dg, Half db, Half da) {      \
-        return name##_(st, (RGBA_XY){{sr,sg,sb,sa}}                           \
-                         , (RGBA_XY){{dr,dg,db,da}});                         \
-    }                                                                         \
+#define stage_fn(name, ...)                                              \
+    CC name(struct Stage *st, Half,Half,Half,Half, Half,Half,Half,Half); \
+    ND static inline RGBA name##_(struct Stage*, RGBA_XY s, RGBA_XY d);  \
+    CC RGBA name(struct Stage *st, Half sr, Half sg, Half sb, Half sa    \
+                                 , Half dr, Half dg, Half db, Half da) { \
+        return name##_(st, (RGBA_XY){{sr,sg,sb,sa}}                      \
+                         , (RGBA_XY){{dr,dg,db,da}});                    \
+    }                                                                    \
     ND static inline RGBA name##_(__VA_ARGS__)
 
 extern struct Stage const stage_noop,
