@@ -59,23 +59,29 @@ typedef struct {
     Half r,g,b,a;
 } RGBA;
 
+typedef union {
+    struct { Half r,g,b,a; };
+    struct { Float x,y; };
+} RGBA_XY;
+
 struct Stage {
-    RGBA (CC *fn)(struct Stage*, Half, Half, Half, Half);
+    RGBA (CC *fn)(struct Stage*, Half,Half,Half,Half, Half,Half,Half,Half);
     void *ctx;
 };
 
-ND static inline RGBA call(struct Stage *st, Float x, Float y) {
-    union { Float xy[2]; Half abi[4]; } pun = {{x,y}};
-    return st->fn(st, pun.abi[0], pun.abi[1], pun.abi[2], pun.abi[3]);
+ND static inline RGBA call(struct Stage *st, RGBA_XY s, RGBA_XY d) {
+    return st->fn(st, s.r,s.g,s.b,s.a, d.r,d.g,d.b,d.a);
 }
 
-#define stage_fn(name, ...)                                                      \
-    CC RGBA name(struct Stage *st, Half abi0, Half abi1, Half abi2, Half abi3);  \
-    ND static inline RGBA name##_(struct Stage*, Float, Float);                  \
-    CC RGBA name(struct Stage *st, Half abi0, Half abi1, Half abi2, Half abi3) { \
-        union { Half abi[4]; Float xy[2]; } pun = {{abi0,abi1,abi2,abi3}};       \
-        return name##_(st, pun.xy[0], pun.xy[1]);                                \
-    }                                                                            \
+#define stage_fn(name, ...)                                              \
+    CC RGBA name(struct Stage *st, Half sr, Half sg, Half sb, Half sa    \
+                                 , Half dr, Half dg, Half db, Half da);  \
+    ND static inline RGBA name##_(struct Stage*, RGBA_XY s, RGBA_XY d);  \
+    CC RGBA name(struct Stage *st, Half sr, Half sg, Half sb, Half sa    \
+                                 , Half dr, Half dg, Half db, Half da) { \
+        return name##_(st, (RGBA_XY){{sr,sg,sb,sa}}                      \
+                         , (RGBA_XY){{dr,dg,db,da}});                    \
+    }                                                                    \
     ND static inline RGBA name##_(__VA_ARGS__)
 
 extern struct Stage const stage_noop,

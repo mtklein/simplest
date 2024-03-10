@@ -13,11 +13,12 @@ struct grad {
          invH;
 };
 
-static stage_fn(grad, struct Stage st[], Float x, Float y) {
+static stage_fn(grad, struct Stage st[], RGBA_XY s, RGBA_XY d) {
+    (void)d;
     struct grad const *grad = st->ctx;
-    Half r = cast(Half, x) * grad->invW,
+    Half r = cast(Half, s.x) * grad->invW,
          g = (Half){0} + 0.5,
-         b = cast(Half, y) * grad->invH,
+         b = cast(Half, s.y) * grad->invH,
          a = (Half){0} + 1.0;
     return (RGBA){r,g,b,a};
 }
