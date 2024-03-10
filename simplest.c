@@ -112,14 +112,35 @@ CC static void store_rgba_8888(RGBA rgba, void *ptr) {
     memcpy(ptr, &px, sizeof px);
 #endif
 }
-struct PixelFormat const rgba_8888 = {4, load_rgba_8888, store_rgba_8888};
+struct PixelFormat const fmt_rgba_8888 = {4, load_rgba_8888, store_rgba_8888};
 
-CC RGBA load_zero(void const *ptr) {
-    (void)ptr;
-    return (RGBA){0};
+CC static RGBA load_rgb_fff(void const *ptr) {
+    float const *p = ptr;
+#if 1 && defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
+    float32x4x3_t lo = vld3q_f32(p+ 0),
+                  hi = vld3q_f32(p+12);
+    typedef float16x4_t Part;
+    return (RGBA) {
+        __builtin_shufflevector(cast(Part,lo.val[0]), cast(Part,hi.val[0]), 0,1,2,3,4,5,6,7),
+        __builtin_shufflevector(cast(Part,lo.val[1]), cast(Part,hi.val[1]), 0,1,2,3,4,5,6,7),
+        __builtin_shufflevector(cast(Part,lo.val[2]), cast(Part,hi.val[2]), 0,1,2,3,4,5,6,7),
+        (Half){0} + 1,
+    };
+#else
+    RGBA c = {.a = (Half){0}+1};
+    half *r = (half*)&c.r,
+         *g = (half*)&c.g,
+         *b = (half*)&c.b;
+    for (int i = 0; i < K; i++) {
+        *r++ = (half)*p++;
+        *g++ = (half)*p++;
+        *b++ = (half)*p++;
+    }
+    return c;
+#endif
 }
 
-CC void store_rgb_fff(RGBA rgba, void *ptr) {
+CC static void store_rgb_fff(RGBA rgba, void *ptr) {
     float *p = ptr;
 #if 1 && defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
     Float r = cast(Float, rgba.r),
@@ -146,6 +167,7 @@ CC void store_rgb_fff(RGBA rgba, void *ptr) {
     }
 #endif
 }
+struct PixelFormat const fmt_rgb_fff = {12, load_rgb_fff, store_rgb_fff};
 
 enum Coverage { NONE, PARTIAL, FULL };
 static enum Coverage classify(RGBA c) {
@@ -167,16 +189,16 @@ static enum Coverage classify(RGBA c) {
     return PARTIAL;
 }
 
-static void blit_slab(void                     *ptr,
-                      RGBA_XY                   xy,
-                      struct PixelFormat const *fmt,
-                      struct Stage              cover[],
-                      struct Stage              color[]) {
+static void blit_slab(void              *ptr,
+                      RGBA_XY            xy,
+                      struct PixelFormat fmt,
+                      struct Stage       cover[],
+                      struct Stage       color[]) {
     RGBA c = call(cover, xy,xy);
     enum Coverage coverage = classify(c);
 
     if (coverage != NONE) {
-        RGBA d = fmt->load(ptr),
+        RGBA d = fmt.load(ptr),
              s = call(color, xy, (RGBA_XY){.r=d.r, .g=d.g, .b=d.b, .a=d.a});
         if (coverage != FULL) {
             s.r = (s.r - d.r) * c.r + d.r;
@@ -184,14 +206,14 @@ static void blit_slab(void                     *ptr,
             s.b = (s.b - d.b) * c.b + d.b;
             s.a = (s.a - d.a) * c.a + d.a;
         }
-        fmt->store(s, ptr);
+        fmt.store(s, ptr);
     }
 }
 
 void blit_row(void *ptr, int dx, int dy, int n,
-              struct PixelFormat const *fmt,
-              struct Stage              cover[],
-              struct Stage              color[]) {
+              struct PixelFormat fmt,
+              struct Stage       cover[],
+              struct Stage       color[]) {
     union {
         float arr[8];
         Float vec;
@@ -204,13 +226,13 @@ void blit_row(void *ptr, int dx, int dy, int n,
 
     while (n >= K) {
         blit_slab(ptr, xy, fmt,cover,color);
-        ptr   = (char*)ptr + K*fmt->bpp;
+        ptr   = (char*)ptr + K*fmt.bpp;
         xy.x += (float)K;
         n    -= K;
     }
 
     if (n) {
-        size_t const len = (size_t)n*fmt->bpp;
+        size_t const len = (size_t)n*fmt.bpp;
         float tmp[4*K];
         assert(len <= sizeof(tmp));
 

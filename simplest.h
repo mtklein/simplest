@@ -97,16 +97,14 @@ struct affine {
 struct Stage stage_affine(struct affine*);
 
 struct PixelFormat {
-    size_t bpp;
+    size_t    bpp;
     RGBA (CC *load )(void const*);
     void (CC *store)(RGBA, void*);
 };
-extern struct PixelFormat const rgba_8888;
-
-CC RGBA load_zero(void const*);
-CC void store_rgb_fff(RGBA, void*);
+extern struct PixelFormat const fmt_rgba_8888,
+                                fmt_rgb_fff;
 
 void blit_row(void *dst, int dx, int dy, int n,
-              struct PixelFormat const *fmt,
-              struct Stage              cover[],
-              struct Stage              color[]);
+              struct PixelFormat fmt,
+              struct Stage       cover[],
+              struct Stage       color[]);

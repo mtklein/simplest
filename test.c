@@ -32,9 +32,6 @@ int main(int argc, char **argv) {
     int const w = 319,
               h = 240;
 
-    struct RGB { float r,g,b; } *px = calloc((size_t)w * (size_t)h, sizeof *px);
-    struct PixelFormat const fmt = {sizeof *px, load_zero, store_rgb_fff};
-
     float const r = 100;
     struct affine affine = {
         1.000f/r, 0.250f/r, -160.0f/r,
@@ -51,9 +48,10 @@ int main(int argc, char **argv) {
         stage_blend_srcover,
     };
 
+    struct RGB { float r,g,b; } *px = calloc((size_t)w * (size_t)h, sizeof *px);
     for (int i = 0; i < loops; i++) {
         for (int y = 0; y < h; y++) {
-            blit_row(px + y*w, 0,y,w, &fmt,cover,color);
+            blit_row(px + y*w, 0,y,w, fmt_rgb_fff,cover,color);
         }
     }
 
