@@ -2,11 +2,6 @@
 #include "stb/stb_image_write.h"
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-
-static void write_to_fd(void *fd, void *buf, int len) {
-    write(*(int*)fd, buf, (size_t)len);
-}
 
 struct grad { half invW, invH; };
 static RGBA stage_fn(sample_grad, struct Stage st[], RGBA_XY s, RGBA_XY d) {
@@ -63,8 +58,7 @@ int main(int argc, char **argv) {
     }
 
     if (loops == 1) {
-        int fd = 1;
-        stbi_write_hdr_to_func(write_to_fd,&fd, w,h,3, &px->r);
+        stbi_write_hdr("/dev/stdout", w,h,3, &px->r);
     }
 
     free(px);
