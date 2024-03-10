@@ -141,6 +141,10 @@ CC static RGBA load_rgb_fff(void const *ptr) {
 }
 
 CC static void store_rgb_fff(RGBA rgba, void *ptr) {
+    rgba.r *= 1 / rgba.a;
+    rgba.g *= 1 / rgba.a;
+    rgba.b *= 1 / rgba.a;
+
     float *p = ptr;
 #if 1 && defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
     Float r = cast(Float, rgba.r),
