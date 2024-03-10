@@ -42,8 +42,8 @@ int main(int argc, char **argv) {
 
     float const r = 100;
     struct affine affine = {
-        .sx=1.000f/r, .kx=0.250f/r, .tx=-160.0f/r,
-        .ky=0.125f/r, .sy=1.000f/r, .ty=-120.0f/r,
+        1.000f/r, 0.250f/r, -160.0f/r,
+        0.125f/r, 1.000f/r, -120.0f/r,
     };
     struct Stage full_cover[] = {stage_white},
                  oval_cover[] = {stage_affine(&affine), stage_circle},
