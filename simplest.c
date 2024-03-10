@@ -193,11 +193,8 @@ static enum Coverage classify(RGBA c) {
     return PARTIAL;
 }
 
-static void blit_slab(void              *ptr,
-                      RGBA_XY            xy,
-                      struct PixelFormat fmt,
-                      struct Stage       cover[],
-                      struct Stage       color[]) {
+static void blit_slab(void *ptr, RGBA_XY xy,
+                      struct PixelFormat fmt, struct Stage cover[], struct Stage color[]) {
     RGBA c = call(cover, xy,xy);
     enum Coverage coverage = classify(c);
 
@@ -215,9 +212,7 @@ static void blit_slab(void              *ptr,
 }
 
 void blit_row(void *ptr, int dx, int dy, int n,
-              struct PixelFormat fmt,
-              struct Stage       cover[],
-              struct Stage       color[]) {
+              struct PixelFormat fmt, struct Stage cover[], struct Stage color[]) {
     union {
         float arr[8];
         Float vec;
@@ -229,7 +224,7 @@ void blit_row(void *ptr, int dx, int dy, int n,
     };
 
     while (n >= K) {
-        blit_slab(ptr, xy, fmt,cover,color);
+        blit_slab(ptr,xy,fmt,cover,color);
         ptr   = (char*)ptr + K*fmt.bpp;
         xy.x += (float)K;
         n    -= K;
@@ -241,7 +236,7 @@ void blit_row(void *ptr, int dx, int dy, int n,
         assert(len <= sizeof(tmp));
 
         memcpy(tmp,ptr,len);
-        blit_slab(tmp, xy, fmt,cover,color);
+        blit_slab(tmp,xy,fmt,cover,color);
         memcpy(ptr,tmp,len);
     }
 }
