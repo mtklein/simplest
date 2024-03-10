@@ -3,12 +3,39 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct grad {
+struct Point {
+    float x,y;
+};
+
+struct Multisample {
+    struct Point const *delta;
+    int                 deltas,unused;
+};
+static RGBA stage_fn(multisample, struct Stage st[], RGBA_XY s, RGBA_XY d) {
+    struct Multisample const *ms = st->ctx;
+    half const scale = 1 / (half)ms->deltas;
+
+    RGBA c = {0};
+    for (int i = 0; i < ms->deltas; i++) {
+        RGBA sample = call(st+1, (RGBA_XY){.x=s.x+ms->delta[i].x, .y=s.y+ms->delta[i].y}, d);
+        c.r += sample.r;
+        c.g += sample.g;
+        c.b += sample.b;
+        c.a += sample.a;
+    }
+    c.r *= scale;
+    c.g *= scale;
+    c.b *= scale;
+    c.a *= scale;
+    return c;
+}
+
+struct Grad {
     half invW,
          invH;
 };
 static RGBA stage_fn(sample_grad, struct Stage st[], RGBA_XY s, RGBA_XY d) {
-    struct grad const *grad = st->ctx;
+    struct Grad const *grad = st->ctx;
     Half a = (Half){0} + 0.875;
     return call(st+1, (RGBA_XY) {
         .r = a * cast(Half, s.x) * grad->invW,
@@ -26,6 +53,14 @@ int main(int argc, char **argv) {
         if (0 == strcmp("full", argv[i])) { full = 1; }
     }
 
+    struct Point const delta[] = {
+        {-0.25, -0.75},
+        {+0.75, -0.25},
+        {-0.75, +0.25},
+        {+0.25, +0.75},
+    };
+    struct Multisample ms = {.delta=delta, .deltas = sizeof delta / sizeof *delta};
+
     int const w = 319,
               h = 240;
 
@@ -35,10 +70,10 @@ int main(int argc, char **argv) {
         0.125f/r, 1.000f/r, -120.0f/r,
     };
     struct Stage cover_full[] = {stage_cover_full},
-                 cover_oval[] = {stage_affine(&affine), stage_cover_circle},
+                 cover_oval[] = {{multisample, &ms}, stage_affine(&affine), stage_cover_circle},
                 *cover        = full ? cover_full : cover_oval;
 
-    struct grad grad = {
+    struct Grad grad = {
         (half)1/w,
         (half)1/h
     };
