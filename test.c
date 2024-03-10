@@ -49,6 +49,12 @@ int main(int argc, char **argv) {
     };
 
     struct RGB { float r,g,b; } *px = calloc((size_t)w * (size_t)h, sizeof *px);
+    for (int y = 0; y < h; y++)
+    for (int x = 0; x < w; x++) {
+        float const gray = (x&16)==(y&16) ? 0.125f : 0.5f;
+        px[y*w + x] = (struct RGB){gray,gray,gray};
+    }
+
     for (int i = 0; i < loops; i++) {
         for (int y = 0; y < h; y++) {
             blit_row(px + y*w, 0,y,w, fmt_rgb_fff,cover,color);
