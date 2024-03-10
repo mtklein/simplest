@@ -10,23 +10,22 @@ static stage_fn(noop, struct Stage st[], RGBA_XY s, RGBA_XY d) {
 }
 struct Stage const stage_noop = {noop,NULL};
 
-static stage_fn(white, struct Stage st[], RGBA_XY s, RGBA_XY d) {
+static stage_fn(cover_full, struct Stage st[], RGBA_XY s, RGBA_XY d) {
     (void)st;
     (void)s;
     (void)d;
     Half one = (Half){0} + 1;
     return (RGBA){one,one,one,one};
 }
-struct Stage const stage_white = {white,NULL};
+struct Stage const stage_cover_full = {cover_full,NULL};
 
 static stage_fn(swap_rb, struct Stage st[], RGBA_XY s, RGBA_XY d) {
-    RGBA c = call(st+1, s,d);
-
-    Half tmp;
-    tmp = c.r;
-    c.r = c.b;
-    c.b = tmp;
-    return c;
+    return call(st+1, (RGBA_XY) {
+        .r = s.b,
+        .g = s.g,
+        .b = s.r,
+        .a = s.a,
+    }, d);
 }
 struct Stage const stage_swap_rb = {swap_rb,NULL};
 
@@ -36,13 +35,13 @@ static Half bit_and(Half x, HMask cond) {
     return pun.h;
 }
 
-static stage_fn(circle, struct Stage st[], RGBA_XY s, RGBA_XY d) {
+static stage_fn(cover_circle, struct Stage st[], RGBA_XY s, RGBA_XY d) {
     (void)st;
     (void)d;
     Half c = bit_and((Half){0} + 1, cast(HMask, s.x*s.x + s.y*s.y < 1));
     return (RGBA){c,c,c,c};
 }
-struct Stage const stage_circle = {circle,NULL};
+struct Stage const stage_cover_circle = {cover_circle,NULL};
 
 static stage_fn(affine, struct Stage st[], RGBA_XY s, RGBA_XY d) {
     struct affine const *m = st->ctx;
@@ -53,18 +52,28 @@ static stage_fn(affine, struct Stage st[], RGBA_XY s, RGBA_XY d) {
 }
 struct Stage stage_affine(struct affine *m) { return (struct Stage){affine,m}; }
 
-CC RGBA blend_src(RGBA s, RGBA d) {
+static stage_fn(blend_src, struct Stage st[], RGBA_XY s, RGBA_XY d) {
+    (void)st;
     (void)d;
-    return s;
+    return (RGBA) {
+        .r = s.r,
+        .g = s.g,
+        .b = s.b,
+        .a = s.a,
+    };
 }
+struct Stage const stage_blend_src = {blend_src,NULL};
 
-CC RGBA blend_srcover(RGBA s, RGBA d) {
-    s.r += d.r * (1-s.a);
-    s.g += d.g * (1-s.a);
-    s.b += d.b * (1-s.a);
-    s.a += d.a * (1-s.a);
-    return s;
+static stage_fn(blend_srcover, struct Stage st[], RGBA_XY s, RGBA_XY d) {
+    (void)st;
+    return (RGBA) {
+        .r = s.r + d.r * (1-s.a),
+        .g = s.g + d.g * (1-s.a),
+        .b = s.b + d.b * (1-s.a),
+        .a = s.a + d.a * (1-s.a),
+    };
 }
+struct Stage const stage_blend_srcover = {blend_srcover,NULL};
 
 
 CC static RGBA load_rgba_8888(void const *ptr) {
@@ -161,7 +170,6 @@ static enum Coverage classify(RGBA c) {
 static void blit_slab(void                     *ptr,
                       RGBA_XY                   xy,
                       struct PixelFormat const *fmt,
-                      BlendFn                  *blend,
                       struct Stage              cover[],
                       struct Stage              color[]) {
     RGBA c = call(cover, xy,xy);
@@ -169,7 +177,7 @@ static void blit_slab(void                     *ptr,
 
     if (coverage != NONE) {
         RGBA d = fmt->load(ptr),
-             s = blend(call(color, xy,xy), d);
+             s = call(color, xy, (RGBA_XY){.r=d.r, .g=d.g, .b=d.b, .a=d.a});
         if (coverage != FULL) {
             s.r = (s.r - d.r) * c.r + d.r;
             s.g = (s.g - d.g) * c.g + d.g;
@@ -182,7 +190,6 @@ static void blit_slab(void                     *ptr,
 
 void blit_row(void *ptr, int dx, int dy, int n,
               struct PixelFormat const *fmt,
-              BlendFn                  *blend,
               struct Stage              cover[],
               struct Stage              color[]) {
     union {
@@ -196,7 +203,7 @@ void blit_row(void *ptr, int dx, int dy, int n,
     };
 
     while (n >= K) {
-        blit_slab(ptr, xy, fmt,blend,cover,color);
+        blit_slab(ptr, xy, fmt,cover,color);
         ptr   = (char*)ptr + K*fmt->bpp;
         xy.x += (float)K;
         n    -= K;
@@ -208,7 +215,7 @@ void blit_row(void *ptr, int dx, int dy, int n,
         assert(len <= sizeof(tmp));
 
         memcpy(tmp,ptr,len);
-        blit_slab(tmp, xy, fmt,blend,cover,color);
+        blit_slab(tmp, xy, fmt,cover,color);
         memcpy(ptr,tmp,len);
     }
 }

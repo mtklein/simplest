@@ -8,23 +8,17 @@ static void write_to_fd(void *fd, void *buf, int len) {
     write(*(int*)fd, buf, (size_t)len);
 }
 
-struct grad {
-    half invW,
-         invH;
-};
-
+struct grad { half invW, invH; };
 static stage_fn(grad, struct Stage st[], RGBA_XY s, RGBA_XY d) {
-    (void)d;
     struct grad const *grad = st->ctx;
-    Half r = cast(Half, s.x) * grad->invW,
-         g = (Half){0} + 0.5,
-         b = cast(Half, s.y) * grad->invH,
-         a = (Half){0} + 1.0;
-    return (RGBA){r,g,b,a};
+    return call(st+1, (RGBA_XY) {
+        .r = cast(Half, s.x) * grad->invW,
+        .g = (Half){0} + 0.5,
+        .b = cast(Half, s.y) * grad->invH,
+        .a = (Half){0} + 1.0,
+    }, d);
 }
-static struct Stage stage_grad(struct grad *ctx) {
-    return (struct Stage){grad,ctx};
-}
+static struct Stage stage_grad(struct grad *ctx) { return (struct Stage){grad,ctx}; }
 
 
 int main(int argc, char **argv) {
@@ -46,16 +40,20 @@ int main(int argc, char **argv) {
         1.000f/r, 0.250f/r, -160.0f/r,
         0.125f/r, 1.000f/r, -120.0f/r,
     };
-    struct Stage full_cover[] = {stage_white},
-                 oval_cover[] = {stage_affine(&affine), stage_circle},
-                     *cover   = full ? full_cover : oval_cover;
+    struct Stage cover_full[] = {stage_cover_full},
+                 cover_oval[] = {stage_affine(&affine), stage_cover_circle},
+                *cover        = full ? cover_full : cover_oval;
 
-    struct grad grad = {(half)1/w, (half)1/h};
-    struct Stage color[] = {stage_swap_rb, stage_grad(&grad)};
+    struct grad grad = { (half)1/w, (half)1/h };
+    struct Stage color[] = {
+        stage_grad(&grad),
+        stage_swap_rb,
+        stage_blend_srcover,
+    };
 
     for (int i = 0; i < loops; i++) {
         for (int y = 0; y < h; y++) {
-            blit_row(px + y*w, 0,y,w, &fmt,blend_srcover,cover,color);
+            blit_row(px + y*w, 0,y,w, &fmt,cover,color);
         }
     }
 

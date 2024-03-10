@@ -85,20 +85,17 @@ ND static inline RGBA call(struct Stage *st, RGBA_XY s, RGBA_XY d) {
     ND static inline RGBA name##_(__VA_ARGS__)
 
 extern struct Stage const stage_noop,
-                          stage_white,
                           stage_swap_rb,
-                          stage_circle;
+                          stage_cover_full,
+                          stage_cover_circle,
+                          stage_blend_src,
+                          stage_blend_srcover;
 
 struct affine {
     float sx,kx,tx,
           ky,sy,ty;
 };
 struct Stage stage_affine(struct affine*);
-
-typedef RGBA (CC BlendFn)(RGBA, RGBA);
-
-BlendFn blend_src,
-        blend_srcover;
 
 struct PixelFormat {
     size_t bpp;
@@ -112,6 +109,5 @@ CC void store_rgb_fff(RGBA, void*);
 
 void blit_row(void *dst, int dx, int dy, int n,
               struct PixelFormat const *fmt,
-              BlendFn                  *blend,
               struct Stage              cover[],
               struct Stage              color[]);
