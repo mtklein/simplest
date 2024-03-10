@@ -9,7 +9,7 @@ static void write_to_fd(void *fd, void *buf, int len) {
 }
 
 struct grad { half invW, invH; };
-static RGBA stage_fn(grad, struct Stage st[], RGBA_XY s, RGBA_XY d) {
+static RGBA stage_fn(sample_grad, struct Stage st[], RGBA_XY s, RGBA_XY d) {
     struct grad const *grad = st->ctx;
     Half a = (Half){0} + 0.875;
     return call(st+1, (RGBA_XY) {
@@ -19,7 +19,7 @@ static RGBA stage_fn(grad, struct Stage st[], RGBA_XY s, RGBA_XY d) {
         .a = a,
     }, d);
 }
-static struct Stage stage_grad(struct grad *ctx) { return (struct Stage){grad,ctx}; }
+static struct Stage stage_sample_grad(struct grad *ctx) { return (struct Stage){sample_grad,ctx}; }
 
 
 int main(int argc, char **argv) {
@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
 
     struct grad grad = { (half)1/w, (half)1/h };
     struct Stage color[] = {
-        stage_grad(&grad),
+        stage_sample_grad(&grad),
         stage_swap_rb,
         stage_blend_srcover,
     };
