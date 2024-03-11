@@ -8,24 +8,23 @@ struct Point {
 };
 
 struct Multisample {
-    struct Point const *delta;
-    int                 deltas,unused;
+    struct Point const *offset;
+    int                 offsets,unused;
 };
 static RGBA stage_fn(multisample, struct Stage st[], RGBA_XY s, RGBA_XY d) {
     struct Multisample const *ms = st->ctx;
     RGBA c = {0};
-    for (int i = 0; i < ms->deltas; i++) {
-        RGBA sample = call(st+1, (RGBA_XY){.x=s.x+ms->delta[i].x, .y=s.y+ms->delta[i].y}, d);
+    for (int i = 0; i < ms->offsets; i++) {
+        RGBA sample = call(st+1, (RGBA_XY){.x=s.x+ms->offset[i].x, .y=s.y+ms->offset[i].y}, d);
         c.r += sample.r;
         c.g += sample.g;
         c.b += sample.b;
         c.a += sample.a;
     }
-    half const scale = 1 / (half)ms->deltas;
-    c.r *= scale;
-    c.g *= scale;
-    c.b *= scale;
-    c.a *= scale;
+    c.r *= 1 / (half)ms->offsets;
+    c.g *= 1 / (half)ms->offsets;
+    c.b *= 1 / (half)ms->offsets;
+    c.a *= 1 / (half)ms->offsets;
     return c;
 }
 
@@ -52,7 +51,7 @@ int main(int argc, char **argv) {
         if (0 == strcmp("full", argv[i])) { full = 1; }
     }
 
-    struct Point const delta[] = {
+    struct Point const offset[] = {
     #if 1
         {-0.125, -0.375},
         {+0.375, -0.125},
@@ -70,7 +69,7 @@ int main(int argc, char **argv) {
         {+7/16.0f, +7/16.0f},
     #endif
     };
-    struct Multisample ms = {.delta=delta, .deltas = sizeof delta / sizeof *delta};
+    struct Multisample ms = {.offset=offset, .offsets = sizeof offset / sizeof *offset};
 
     int const w = 319,
               h = 240;
