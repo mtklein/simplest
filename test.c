@@ -14,8 +14,8 @@ struct Multisample {
 static RGBA stage_fn(multisample, struct Stage st[], RGBA_XY s, RGBA_XY d) {
     struct Multisample const *ms = st->ctx;
     RGBA c = {0};
-    for (int i = 0; i < ms->offsets; i++) {
-        RGBA sample = call(st+1, (RGBA_XY){.x=s.x+ms->offset[i].x, .y=s.y+ms->offset[i].y}, d);
+    for (struct Point const *o = ms->offset; o < ms->offset + ms->offsets; o++) {
+        RGBA sample = call(st+1, (RGBA_XY){.x=s.x+o->x, .y=s.y+o->y}, d);
         c.r += sample.r;
         c.g += sample.g;
         c.b += sample.b;
