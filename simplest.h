@@ -2,6 +2,14 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#if 0
+    #if defined(__clang__)
+        #pragma clang diagnostic ignored "-Wreserved-macro-identifier"
+    #endif
+    #undef __ARM_FEATURE_FP16_VECTOR_ARITHMETIC
+#endif
+
+
 #if defined(__wasm__)
     typedef long fmask;
 #else
