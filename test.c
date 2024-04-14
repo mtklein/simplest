@@ -29,12 +29,12 @@ static RGBA stage_fn(multisample, struct Stage st[], RGBA_XY s, RGBA_XY d) {
 }
 
 struct Grad {
-    half invW,
-         invH;
+    half alpha,
+         invW,invH;
 };
 static RGBA stage_fn(sample_grad, struct Stage st[], RGBA_XY s, RGBA_XY d) {
     struct Grad const *grad = st->ctx;
-    Half a = (Half){0} + 0.875;
+    Half a = (Half){0} + grad->alpha;
     return call(st+1, (RGBA_XY) {
         .r = a * cast(Half, s.x) * grad->invW,
         .g = a * (Half){0} + 0.5,
@@ -46,9 +46,11 @@ static RGBA stage_fn(sample_grad, struct Stage st[], RGBA_XY s, RGBA_XY d) {
 int main(int argc, char **argv) {
     int const loops = argc > 1 ? atoi(argv[1]) : 1;
 
-    _Bool full = 0;
+    _Bool full  = 0;
+    half  alpha = 0.875;
     for (int i = 2; i < argc; i++) {
-        if (0 == strcmp("full", argv[i])) { full = 1; }
+        if (0 == strcmp("full", argv[i]))   { full = 1; }
+        if (0 == strcmp("opaque", argv[i])) { alpha = 1; }
     }
 
     struct Point const offset[] = {
@@ -84,6 +86,7 @@ int main(int argc, char **argv) {
                 *cover        = full ? cover_full : cover_oval;
 
     struct Grad grad = {
+        alpha,
         (half)1/w,
         (half)1/h
     };
