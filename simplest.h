@@ -91,11 +91,7 @@ ND static inline RGBA call(struct Stage *st, RGBA_XY s, RGBA_XY d) {
     }                                                                    \
     ND static inline RGBA name##_(__VA_ARGS__)
 
-extern struct Stage const stage_noop,
-                          stage_swap_rb,
-                          stage_cover_full,
-                          stage_cover_circle,
-                          stage_blend_src,
+extern struct Stage const stage_cover_full,
                           stage_blend_srcover;
 
 struct affine {

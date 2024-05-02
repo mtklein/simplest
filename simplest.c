@@ -5,11 +5,6 @@
     #include <arm_neon.h>
 #endif
 
-static RGBA stage_fn(noop, struct Stage st[], RGBA_XY s, RGBA_XY d) {
-    return call(st+1, s,d);
-}
-struct Stage const stage_noop = {noop,NULL};
-
 static RGBA stage_fn(cover_full, struct Stage st[], RGBA_XY s, RGBA_XY d) {
     (void)st;
     (void)s;
@@ -19,30 +14,6 @@ static RGBA stage_fn(cover_full, struct Stage st[], RGBA_XY s, RGBA_XY d) {
 }
 struct Stage const stage_cover_full = {cover_full,NULL};
 
-static RGBA stage_fn(swap_rb, struct Stage st[], RGBA_XY s, RGBA_XY d) {
-    return call(st+1, (RGBA_XY) {
-        .r = s.b,
-        .g = s.g,
-        .b = s.r,
-        .a = s.a,
-    }, d);
-}
-struct Stage const stage_swap_rb = {swap_rb,NULL};
-
-static Half bit_and(Half x, HMask cond) {
-    union {Half h; HMask bits;} pun = {x};
-    pun.bits &= cond;
-    return pun.h;
-}
-
-static RGBA stage_fn(cover_circle, struct Stage st[], RGBA_XY s, RGBA_XY d) {
-    (void)st;
-    (void)d;
-    Half c = bit_and((Half){0} + 1, cast(HMask, s.x*s.x + s.y*s.y < 1));
-    return (RGBA){c,c,c,c};
-}
-struct Stage const stage_cover_circle = {cover_circle,NULL};
-
 static RGBA stage_fn(affine, struct Stage st[], RGBA_XY s, RGBA_XY d) {
     struct affine const *m = st->ctx;
     return call(st+1, (RGBA_XY) {
@@ -51,18 +22,6 @@ static RGBA stage_fn(affine, struct Stage st[], RGBA_XY s, RGBA_XY d) {
     }, d);
 }
 struct Stage stage_affine(struct affine *m) { return (struct Stage){affine,m}; }
-
-static RGBA stage_fn(blend_src, struct Stage st[], RGBA_XY s, RGBA_XY d) {
-    (void)st;
-    (void)d;
-    return (RGBA) {
-        .r = s.r,
-        .g = s.g,
-        .b = s.b,
-        .a = s.a,
-    };
-}
-struct Stage const stage_blend_src = {blend_src,NULL};
 
 static RGBA stage_fn(blend_srcover, struct Stage st[], RGBA_XY s, RGBA_XY d) {
     (void)st;

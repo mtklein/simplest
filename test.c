@@ -3,6 +3,30 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define len(x) (int)( sizeof(x) / sizeof 0[x] )
+
+static RGBA stage_fn(swap_rb, struct Stage st[], RGBA_XY s, RGBA_XY d) {
+    return call(st+1, (RGBA_XY) {
+        .r = s.b,
+        .g = s.g,
+        .b = s.r,
+        .a = s.a,
+    }, d);
+}
+
+static Half bit_and(Half x, HMask cond) {
+    union {Half h; HMask bits;} pun = {x};
+    pun.bits &= cond;
+    return pun.h;
+}
+static RGBA stage_fn(cover_circle, struct Stage st[], RGBA_XY s, RGBA_XY d) {
+    (void)st;
+    (void)d;
+    Half c = bit_and((Half){0} + 1, cast(HMask, s.x*s.x + s.y*s.y < 1));
+    return (RGBA){c,c,c,c};
+}
+
+
 struct Point {
     float x,y;
 };
@@ -54,24 +78,12 @@ int main(int argc, char **argv) {
     }
 
     struct Point const offset[] = {
-    #if 1
         {-0.125, -0.375},
         {+0.375, -0.125},
         {-0.375, +0.125},
         {+0.125, +0.375},
-    #else
-        {+1/16.0f, -3/16.0f},
-        {-1/16.0f, +3/16.0f},
-        {+5/16.0f, +1/16.0f},
-        {-3/16.0f, -5/16.0f},
-
-        {-5/16.0f, +5/16.0f},
-        {-7/16.0f, -1/16.0f},
-        {+3/16.0f, +7/16.0f},
-        {+7/16.0f, +7/16.0f},
-    #endif
     };
-    struct Multisample ms = {.offset=offset, .offsets = sizeof offset / sizeof *offset};
+    struct Multisample ms = {.offset=offset, .offsets=len(offset)};
 
     int const w = 319,
               h = 240;
@@ -82,8 +94,7 @@ int main(int argc, char **argv) {
         0.125f/r, 1.000f/r, -120.0f/r,
     };
     struct Stage cover_full[] = {stage_cover_full},
-                 cover_oval[] = {{multisample, &ms}, stage_affine(&affine), stage_cover_circle},
-                *cover        = full ? cover_full : cover_oval;
+                 cover_oval[] = {{multisample, &ms}, stage_affine(&affine), {cover_circle,NULL}};
 
     struct Grad grad = {
         alpha,
@@ -92,7 +103,7 @@ int main(int argc, char **argv) {
     };
     struct Stage color[] = {
         {sample_grad, &grad},
-        stage_swap_rb,
+        {swap_rb, NULL},
         stage_blend_srcover,
     };
 
@@ -105,7 +116,9 @@ int main(int argc, char **argv) {
 
     for (int i = 0; i < loops; i++) {
         for (int y = 0; y < h; y++) {
-            blit_row(px + y*w, 0,y,w, fmt_rgb_fff,cover,color);
+            blit_row(px + y*w, 0,y,w, fmt_rgb_fff,
+                     full ? cover_full : cover_oval,
+                     color);
         }
     }
 
