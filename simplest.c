@@ -5,14 +5,14 @@
     #include <arm_neon.h>
 #endif
 
-static RGBA stage_fn(cover_full, struct Stage st[], RGBA_XY s, RGBA const *d) {
+static RGBA stage_fn(white, struct Stage st[], RGBA_XY s, RGBA const *d) {
     (void)st;
     (void)s;
     (void)d;
     Half one = (Half){0} + 1;
     return (RGBA){one,one,one,one};
 }
-struct Stage const stage_cover_full = {cover_full,NULL};
+struct Stage const stage_white = {white,NULL};
 
 static RGBA stage_fn(affine, struct Stage st[], RGBA_XY s, RGBA const *d) {
     struct affine const *m = st->ctx;

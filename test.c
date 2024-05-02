@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
         1.000f/r, 0.250f/r, -160.0f/r,
         0.125f/r, 1.000f/r, -120.0f/r,
     };
-    struct Stage cover_full[] = {stage_cover_full},
+    struct Stage cover_full[] = {stage_white},
                  cover_oval[] = {{multisample, &ms}, stage_affine(&affine), {cover_circle,NULL}};
 
     struct Grad grad = {
