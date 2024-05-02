@@ -55,7 +55,7 @@ CC static RGBA load_rgba_8888(void const *ptr) {
     };
 #endif
 }
-CC static void store_rgba_8888(RGBA rgba, void *ptr) {
+CC static void store_rgba_8888(void *ptr, RGBA rgba) {
 #if 1 && defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
     vst4_u8(ptr, ((uint8x8x4_t){
         cast(U8, rgba.r * 255 + 0.5),
@@ -106,7 +106,7 @@ CC static RGBA load_rgb_fff(void const *ptr) {
 #endif
 }
 
-CC static void store_rgb_fff(RGBA rgba, void *ptr) {
+CC static void store_rgb_fff(void *ptr, RGBA rgba) {
     rgba.r *= 1 / rgba.a;
     rgba.g *= 1 / rgba.a;
     rgba.b *= 1 / rgba.a;
@@ -173,7 +173,7 @@ static void blit_slab(void *ptr, RGBA_XY xy,
             s.b = (s.b - d.b) * c.b + d.b;
             s.a = (s.a - d.a) * c.a + d.a;
         }
-        fmt.store(s, ptr);
+        fmt.store(ptr,s);
     }
 }
 

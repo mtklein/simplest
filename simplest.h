@@ -101,7 +101,7 @@ struct Stage stage_affine(struct affine*);
 struct PixelFormat {
     size_t    bpp;
     RGBA (CC *load )(void const*);
-    void (CC *store)(RGBA, void*);
+    void (CC *store)(void*, RGBA);
 };
 extern struct PixelFormat const fmt_rgba_8888,
                                 fmt_rgb_fff;
