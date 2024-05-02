@@ -5,7 +5,7 @@
     #include <arm_neon.h>
 #endif
 
-static RGBA stage_fn(cover_full, struct Stage st[], RGBA_XY s, RGBA_XY d) {
+static RGBA stage_fn(cover_full, struct Stage st[], RGBA_XY s, RGBA const *d) {
     (void)st;
     (void)s;
     (void)d;
@@ -14,7 +14,7 @@ static RGBA stage_fn(cover_full, struct Stage st[], RGBA_XY s, RGBA_XY d) {
 }
 struct Stage const stage_cover_full = {cover_full,NULL};
 
-static RGBA stage_fn(affine, struct Stage st[], RGBA_XY s, RGBA_XY d) {
+static RGBA stage_fn(affine, struct Stage st[], RGBA_XY s, RGBA const *d) {
     struct affine const *m = st->ctx;
     return call(st+1, (RGBA_XY) {
         .x = s.x * m->sx + (s.y * m->kx + m->tx),
@@ -23,13 +23,13 @@ static RGBA stage_fn(affine, struct Stage st[], RGBA_XY s, RGBA_XY d) {
 }
 struct Stage stage_affine(struct affine *m) { return (struct Stage){affine,m}; }
 
-static RGBA stage_fn(blend_srcover, struct Stage st[], RGBA_XY s, RGBA_XY d) {
+static RGBA stage_fn(blend_srcover, struct Stage st[], RGBA_XY s, RGBA const *d) {
     (void)st;
     return (RGBA) {
-        .r = s.r + d.r * (1-s.a),
-        .g = s.g + d.g * (1-s.a),
-        .b = s.b + d.b * (1-s.a),
-        .a = s.a + d.a * (1-s.a),
+        .r = s.r + d->r * (1-s.a),
+        .g = s.g + d->g * (1-s.a),
+        .b = s.b + d->b * (1-s.a),
+        .a = s.a + d->a * (1-s.a),
     };
 }
 struct Stage const stage_blend_srcover = {blend_srcover,NULL};
@@ -161,12 +161,12 @@ static enum Coverage classify(RGBA c) {
 
 static void blit_slab(void *ptr, RGBA_XY xy,
                       struct PixelFormat fmt, struct Stage cover[], struct Stage color[]) {
-    RGBA c = call(cover, xy,xy);
+    RGBA c = call(cover, xy,NULL);
     enum Coverage coverage = classify(c);
 
     if (coverage != NONE) {
         RGBA d = fmt.load(ptr),
-             s = call(color, xy, (RGBA_XY){.r=d.r, .g=d.g, .b=d.b, .a=d.a});
+             s = call(color, xy, &d);
         if (coverage != FULL) {
             s.r = (s.r - d.r) * c.r + d.r;
             s.g = (s.g - d.g) * c.g + d.g;
