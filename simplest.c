@@ -1,7 +1,7 @@
 #include "simplest.h"
 #include <assert.h>
 #include <string.h>
-#if defined(__ARM_NEON__)
+#if defined(__ARM_NEON)
     #include <arm_neon.h>
 #endif
 
@@ -57,12 +57,12 @@ CC static RGBA load_rgba_8888(void const *ptr) {
 }
 CC static void store_rgba_8888(void *ptr, RGBA rgba) {
 #if 1 && defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
-    vst4_u8(ptr, ((uint8x8x4_t){
+    vst4_u8(ptr, ((uint8x8x4_t){{
         cast(U8, rgba.r * 255 + 0.5),
         cast(U8, rgba.g * 255 + 0.5),
         cast(U8, rgba.b * 255 + 0.5),
         cast(U8, rgba.a * 255 + 0.5),
-    }));
+    }}));
 #else
     I32 px = cast(I32, rgba.r * 255 + 0.5) <<  0
            | cast(I32, rgba.g * 255 + 0.5) <<  8
@@ -85,7 +85,7 @@ CC static RGBA load_rgb_fff(void const *ptr) {
 #if 1 && defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
     float32x4x3_t lo = vld3q_f32(p+ 0),
                   hi = vld3q_f32(p+12);
-    typedef float16x4_t Part;
+    typedef half __attribute__((vector_size(8))) Part;
     return (RGBA) {
         __builtin_shufflevector(cast(Part,lo.val[0]), cast(Part,hi.val[0]), 0,1,2,3,4,5,6,7),
         __builtin_shufflevector(cast(Part,lo.val[1]), cast(Part,hi.val[1]), 0,1,2,3,4,5,6,7),
@@ -116,16 +116,16 @@ CC static void store_rgb_fff(void *ptr, RGBA rgba) {
     Float r = cast(Float, rgba.r),
           g = cast(Float, rgba.g),
           b = cast(Float, rgba.b);
-    vst3q_f32(p+ 0, ((float32x4x3_t) {
+    vst3q_f32(p+ 0, ((float32x4x3_t) {{
         __builtin_shufflevector(r,r, 0,1,2,3),
         __builtin_shufflevector(g,g, 0,1,2,3),
         __builtin_shufflevector(b,b, 0,1,2,3),
-    }));
-    vst3q_f32(p+12, ((float32x4x3_t) {
+    }}));
+    vst3q_f32(p+12, ((float32x4x3_t) {{
         __builtin_shufflevector(r,r, 4,5,6,7),
         __builtin_shufflevector(g,g, 4,5,6,7),
         __builtin_shufflevector(b,b, 4,5,6,7),
-    }));
+    }}));
 #else
     half const *r = (half const*)&rgba.r,
                *g = (half const*)&rgba.g,
