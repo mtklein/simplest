@@ -5,8 +5,8 @@
 
 #define len(x) (int)( sizeof(x) / sizeof 0[x] )
 
-static RGBA stage_fn(swap_rb, struct Stage st[], RGBA_XY s, RGBA const *d) {
-    return call(st+1, (RGBA_XY) {
+static RGBA stage_fn(swap_rb, struct Stage st[], RGBA_or_XY s, RGBA const *d) {
+    return call(st+1, (RGBA_or_XY) {
         .r = s.b,
         .g = s.g,
         .b = s.r,
@@ -19,7 +19,7 @@ static Half bit_and(Half x, HMask cond) {
     pun.bits &= cond;
     return pun.h;
 }
-static RGBA stage_fn(cover_circle, struct Stage st[], RGBA_XY s, RGBA const *d) {
+static RGBA stage_fn(cover_circle, struct Stage st[], RGBA_or_XY s, RGBA const *d) {
     (void)st;
     (void)d;
     Half c = bit_and((Half){0} + 1, cast(HMask, s.x*s.x + s.y*s.y < 1));
@@ -35,11 +35,11 @@ struct Multisample {
     struct Point const *offset;
     int                 offsets,unused;
 };
-static RGBA stage_fn(multisample, struct Stage st[], RGBA_XY s, RGBA const *d) {
+static RGBA stage_fn(multisample, struct Stage st[], RGBA_or_XY s, RGBA const *d) {
     struct Multisample const *ms = st->ctx;
     RGBA c = {0};
     for (struct Point const *o = ms->offset; o < ms->offset + ms->offsets; o++) {
-        RGBA sample = call(st+1, (RGBA_XY){.x=s.x+o->x, .y=s.y+o->y}, d);
+        RGBA sample = call(st+1, (RGBA_or_XY){.x=s.x+o->x, .y=s.y+o->y}, d);
         c.r += sample.r;
         c.g += sample.g;
         c.b += sample.b;
@@ -56,10 +56,10 @@ struct Grad {
     half alpha,
          invW,invH;
 };
-static RGBA stage_fn(sample_grad, struct Stage st[], RGBA_XY s, RGBA const *d) {
+static RGBA stage_fn(sample_grad, struct Stage st[], RGBA_or_XY s, RGBA const *d) {
     struct Grad const *grad = st->ctx;
     Half a = (Half){0} + grad->alpha;
-    return call(st+1, (RGBA_XY) {
+    return call(st+1, (RGBA_or_XY) {
         .r = a * cast(Half, s.x) * grad->invW,
         .g = a * (Half){0} + 0.5,
         .b = a * cast(Half, s.y) * grad->invH,
