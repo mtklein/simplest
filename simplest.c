@@ -90,6 +90,7 @@ CC static RGBA load_rgb_fff(void const *ptr) {
     half *r = (half*)&c.r,
          *g = (half*)&c.g,
          *b = (half*)&c.b;
+    #pragma GCC unroll
     for (int i = 0; i < K; i++) {
         *r++ = (half)*p++;
         *g++ = (half)*p++;
@@ -123,6 +124,7 @@ CC static void store_rgb_fff(void *ptr, RGBA rgba) {
     half const *r = (half const*)&rgba.r,
                *g = (half const*)&rgba.g,
                *b = (half const*)&rgba.b;
+    #pragma GCC unroll
     for (int i = 0; i < K; i++) {
         *p++ = (float)*r++;
         *p++ = (float)*g++;
