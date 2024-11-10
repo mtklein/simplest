@@ -49,19 +49,19 @@ typedef union {
 } RGBA_or_XY;
 
 struct Stage {
-    RGBA (CC *fn)(struct Stage*, Half,Half,Half,Half, RGBA const*);
+    RGBA (CC *fn)(struct Stage*, RGBA const*, Half,Half,Half,Half);
     void *ctx;
 };
 
-static inline RGBA call(struct Stage *st, RGBA_or_XY s, RGBA const *d) {
-    return st->fn(st, s.r,s.g,s.b,s.a, d);
+static inline RGBA call(struct Stage *st, RGBA const *d, RGBA_or_XY s) {
+    return st->fn(st, d, s.r,s.g,s.b,s.a);
 }
 
 #define stage_fn(name, ...)                                                         \
-    CC name(struct Stage *st, Half,Half,Half,Half, RGBA const*);                    \
-    static inline RGBA name##_(struct Stage*, RGBA_or_XY s, RGBA const *d);         \
-    CC RGBA name(struct Stage *st, Half r, Half g, Half b, Half a, RGBA const *d) { \
-        return name##_(st, (RGBA_or_XY){{r,g,b,a}}, d);                             \
+    CC name(struct Stage *st, RGBA const*, Half,Half,Half,Half);                    \
+    static inline RGBA name##_(struct Stage*, RGBA const *d, RGBA_or_XY s);         \
+    CC RGBA name(struct Stage *st, RGBA const *d, Half r, Half g, Half b, Half a) { \
+        return name##_(st, d, (RGBA_or_XY){{r,g,b,a}});                             \
     }                                                                               \
     static inline RGBA name##_(__VA_ARGS__)
 

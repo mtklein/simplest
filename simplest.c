@@ -5,25 +5,25 @@
     #include <arm_neon.h>
 #endif
 
-static RGBA stage_fn(white, struct Stage st[], RGBA_or_XY s, RGBA const *d) {
+static RGBA stage_fn(white, struct Stage st[], RGBA const *d, RGBA_or_XY s) {
     (void)st;
-    (void)s;
     (void)d;
+    (void)s;
     Half one = (Half){0} + 1;
     return (RGBA){one,one,one,one};
 }
 struct Stage const stage_white = {white,NULL};
 
-static RGBA stage_fn(affine, struct Stage st[], RGBA_or_XY s, RGBA const *d) {
+static RGBA stage_fn(affine, struct Stage st[], RGBA const *d, RGBA_or_XY s) {
     struct affine const *m = st->ctx;
-    return call(st+1, (RGBA_or_XY) {
+    return call(st+1, d, (RGBA_or_XY) {
         .x = s.x * m->sx + (s.y * m->kx + m->tx),
         .y = s.x * m->ky + (s.y * m->sy + m->ty),
-    }, d);
+    });
 }
 struct Stage stage_affine(struct affine *m) { return (struct Stage){affine,m}; }
 
-static RGBA stage_fn(blend_srcover, struct Stage st[], RGBA_or_XY s, RGBA const *d) {
+static RGBA stage_fn(blend_srcover, struct Stage st[], RGBA const *d, RGBA_or_XY s) {
     (void)st;
     return (RGBA) {
         .r = s.r + d->r * (1-s.a),
@@ -73,14 +73,7 @@ CC static void store_rgba_8888(void *ptr, RGBA rgba) {
 }
 struct PixelFormat const fmt_rgba_8888 = {4, load_rgba_8888, store_rgba_8888};
 
-#if defined(__clang__)
-    #define for_lane(i) _Pragma("unroll") for (int i = 0; i < K; i++)
-#else
-    #define for_lane(i)                   for (int i = 0; i < K; i++)
-#endif
-
 CC static RGBA load_rgb_fff(void const *ptr) {
-    for_lane(i);
     float const *p = ptr;
 #if 1 && defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
     float32x4x3_t lo = vld3q_f32(p+ 0),
@@ -97,7 +90,7 @@ CC static RGBA load_rgb_fff(void const *ptr) {
     half *r = (half*)&c.r,
          *g = (half*)&c.g,
          *b = (half*)&c.b;
-    for_lane(i) {
+    for (int i = 0; i < K; i++) {
         *r++ = (half)*p++;
         *g++ = (half)*p++;
         *b++ = (half)*p++;
@@ -130,7 +123,7 @@ CC static void store_rgb_fff(void *ptr, RGBA rgba) {
     half const *r = (half const*)&rgba.r,
                *g = (half const*)&rgba.g,
                *b = (half const*)&rgba.b;
-    for_lane(i) {
+    for (int i = 0; i < K; i++) {
         *p++ = (float)*r++;
         *p++ = (float)*g++;
         *p++ = (float)*b++;
@@ -161,12 +154,12 @@ static enum Coverage classify(RGBA c) {
 
 static void blit_slab(void *ptr, RGBA_or_XY xy,
                       struct PixelFormat fmt, struct Stage cover[], struct Stage color[]) {
-    RGBA c = call(cover, xy,NULL);
+    RGBA c = call(cover, NULL, xy);
     enum Coverage coverage = classify(c);
 
     if (coverage != NONE) {
         RGBA d = fmt.load(ptr),
-             s = call(color, xy, &d);
+             s = call(color, &d, xy);
         if (coverage != FULL) {
             s.r = (s.r - d.r) * c.r + d.r;
             s.g = (s.g - d.g) * c.g + d.g;

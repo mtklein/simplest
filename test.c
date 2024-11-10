@@ -5,13 +5,13 @@
 
 #define len(x) (int)( sizeof(x) / sizeof 0[x] )
 
-static RGBA stage_fn(swap_rb, struct Stage st[], RGBA_or_XY s, RGBA const *d) {
-    return call(st+1, (RGBA_or_XY) {
+static RGBA stage_fn(swap_rb, struct Stage st[], RGBA const *d, RGBA_or_XY s) {
+    return call(st+1, d, (RGBA_or_XY) {
         .r = s.b,
         .g = s.g,
         .b = s.r,
         .a = s.a,
-    }, d);
+    });
 }
 
 static Half bit_and(Half x, HMask cond) {
@@ -19,7 +19,7 @@ static Half bit_and(Half x, HMask cond) {
     pun.bits &= cond;
     return pun.h;
 }
-static RGBA stage_fn(cover_circle, struct Stage st[], RGBA_or_XY s, RGBA const *d) {
+static RGBA stage_fn(cover_circle, struct Stage st[], RGBA const *d, RGBA_or_XY s) {
     (void)st;
     (void)d;
     Half c = bit_and((Half){0} + 1, cast(HMask, s.x*s.x + s.y*s.y < 1));
@@ -35,11 +35,11 @@ struct Multisample {
     struct Point const *offset;
     int                 offsets,unused;
 };
-static RGBA stage_fn(multisample, struct Stage st[], RGBA_or_XY s, RGBA const *d) {
+static RGBA stage_fn(multisample, struct Stage st[], RGBA const *d, RGBA_or_XY s) {
     struct Multisample const *ms = st->ctx;
     RGBA c = {0};
     for (struct Point const *o = ms->offset; o < ms->offset + ms->offsets; o++) {
-        RGBA sample = call(st+1, (RGBA_or_XY){.x=s.x+o->x, .y=s.y+o->y}, d);
+        RGBA sample = call(st+1, d, (RGBA_or_XY){.x=s.x+o->x, .y=s.y+o->y});
         c.r += sample.r;
         c.g += sample.g;
         c.b += sample.b;
@@ -56,15 +56,15 @@ struct Grad {
     half alpha,
          invW,invH;
 };
-static RGBA stage_fn(sample_grad, struct Stage st[], RGBA_or_XY s, RGBA const *d) {
+static RGBA stage_fn(sample_grad, struct Stage st[], RGBA const *d, RGBA_or_XY s) {
     struct Grad const *grad = st->ctx;
     Half a = (Half){0} + grad->alpha;
-    return call(st+1, (RGBA_or_XY) {
+    return call(st+1, d, (RGBA_or_XY) {
         .r = a * cast(Half, s.x) * grad->invW,
         .g = a * (Half){0} + 0.5,
         .b = a * cast(Half, s.y) * grad->invH,
         .a = a,
-    }, d);
+    });
 }
 
 int main(int argc, char **argv) {
